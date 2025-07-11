@@ -1,0 +1,23 @@
+services:
+  voltlogger:
+    build:
+      context: ./crud
+    container_name: voltlogger
+    environment:
+      - MYSQL_USER=${CRUD_USER}
+      - MYSQL_PASSWORD=${CRUD_PASS}
+      - MYSQL_DB=${CRUD_DB}
+      - MYSQL_HOST=${MARIADB_SERVER}
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+      - FERNET_KEY=${FERNET_KEY}
+    ports:
+      - "8005:8005"   
+    networks:
+      proxy:
+        aliases:
+          - voltlogger
+    restart: unless-stopped
+networks:
+  proxy:
+    external: true
+    name: proxy
