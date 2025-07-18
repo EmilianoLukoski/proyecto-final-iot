@@ -32,8 +32,18 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboards') }}">
+                            <i class="bi bi-graph-up"></i> Dashboards
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('listar_brokers') }}">
-                            <i class="bi bi-bookmarks"></i> Brokers
+                            <i class="bi bi-bookmarks"></i> Agregar Brokers
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('agregar_nodo') }}">
+                            <i class="bi bi-plus-circle"></i> Agregar Nodos
                         </a>
                     </li>
                 </ul>
@@ -71,7 +81,9 @@
 
     <!-- Contenido principal -->
     <div class="container">
+        {% block content %}
         {% block body %}{% endblock %}
+        {% endblock %}
     </div>
 
     <!-- Bootstrap JS -->

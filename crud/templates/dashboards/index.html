@@ -1,0 +1,350 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboards - VoltLogger{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header de la página -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Dashboards de Monitoreo
+                    </h1>
+                    <p class="text-muted mb-0">Visualiza los datos de tensión y frecuencia de tus dispositivos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mostrar dispositivo seleccionado -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-info py-2 mb-0">
+                <strong>Dispositivo seleccionado:</strong> <span id="dispositivo-seleccionado">-</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de dashboards -->
+    <div class="row" id="dashboardsGrid">
+        {% for dashboard in dashboards %}
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100 dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="dashboard-icon me-3">
+                            <i class="{{ dashboard.icono }} text-{{ dashboard.color }} fa-2x"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-0">{{ dashboard.nombre }}</h5>
+                            <small class="text-muted">{{ dashboard.descripcion }}</small>
+                        </div>
+                    </div>
+                    <div class="dashboard-status">
+                        <span class="badge" id="estado-{{ dashboard.tipo }}" style="background:#adb5bd; color:#fff;">
+                            <i class="fas fa-circle me-1"></i>
+                            Desconectado
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="dashboard-preview">
+                        <div class="preview-chart">
+                            <canvas id="preview-{{ dashboard.tipo }}" width="400" height="200"></canvas>
+                        </div>
+                        <div class="preview-info mt-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="metric-preview">
+                                        <div class="metric-value" id="current-{{ dashboard.tipo }}">
+                                            -
+                                        </div>
+                                        <div class="metric-label">Actual</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="metric-preview">
+                                        <div class="metric-value" id="max-{{ dashboard.tipo }}">
+                                            -
+                                        </div>
+                                        <div class="metric-label">Máximo</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="metric-preview">
+                                        <div class="metric-value" id="min-{{ dashboard.tipo }}">
+                                            -
+                                        </div>
+                                        <div class="metric-label">Mínimo</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted" id="last-update-{{ dashboard.tipo }}">
+                            <i class="fas fa-clock me-1"></i>
+                            Última actualización: -
+                        </small>
+                        <a href="{{ url_for('dashboard_' + dashboard.tipo) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            Ver Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Información adicional -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Información de los Dashboards
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-warning">
+                                <i class="fas fa-bolt me-2"></i>
+                                Dashboard de Tensión
+                            </h6>
+                            <p class="text-muted small">
+                                Muestra los valores de tensión eléctrica cada 10 segundos. Permite visualizar el comportamiento de la red en tiempo real y detectar eventos como sobretensiones, caídas de tensión, interrupciones y estados normales, según lo establecido por las normas IEC.
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-info">
+                                <i class="fas fa-wave-square me-2"></i>
+                                Dashboard de Frecuencia
+                            </h6>
+                            <p class="text-muted small">
+                                Registra la frecuencia de la señal eléctrica cada 10 segundos. Es útil para monitorear su estabilidad y detectar variaciones respecto al valor nominal de 50 Hz.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts para gráficos de previsualización -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para actualizar el preview de tensión
+    function actualizarPreviewTension() {
+        fetch(`{{ url_for('api_tension') }}?rango=60`)
+            .then(resp => resp.json())
+            .then(data => {
+                const labels = data.datos.map(d => new Date(d.tiempo).toLocaleTimeString());
+                const values = data.datos.map(d => d.valor);
+                const ctx = document.getElementById('preview-tension').getContext('2d');
+                if (window.tensionPreviewChart) {
+                    window.tensionPreviewChart.data.labels = labels;
+                    window.tensionPreviewChart.data.datasets[0].data = values;
+                    window.tensionPreviewChart.options.scales.y.display = true;
+                    window.tensionPreviewChart.options.scales.y.ticks = { color: '#6c757d', callback: function(value) { return value; } };
+                    window.tensionPreviewChart.update();
+                } else {
+                    window.tensionPreviewChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Tensión (V)',
+                                data: values,
+                                borderColor: '#ffc107',
+                                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { x: { display: true, grid: { display: false } }, y: { display: true, grid: { display: false }, ticks: { color: '#6c757d', callback: function(value) { return value; } } } },
+                            elements: { point: { radius: 0 } }
+                        }
+                    });
+                }
+                // Actualizar métricas
+                document.getElementById('current-tension').textContent = data.estadisticas.actual !== null ? data.estadisticas.actual.toFixed(2) + 'V' : '-';
+                document.getElementById('max-tension').textContent = data.estadisticas.maximo !== null ? data.estadisticas.maximo.toFixed(2) + 'V' : '-';
+                document.getElementById('min-tension').textContent = data.estadisticas.minimo !== null ? data.estadisticas.minimo.toFixed(2) + 'V' : '-';
+                if (data.datos.length > 0) {
+                    const lastTime = new Date(data.datos[data.datos.length - 1].tiempo);
+                    document.getElementById('last-update-tension').textContent = 'Última actualización: ' + tiempoTranscurrido(lastTime);
+                } else {
+                    document.getElementById('last-update-tension').textContent = 'Última actualización: -';
+                }
+            });
+    }
+    // Función para actualizar el preview de frecuencia
+    function actualizarPreviewFrecuencia() {
+        fetch(`{{ url_for('api_frecuencia') }}?rango=60`)
+            .then(resp => resp.json())
+            .then(data => {
+                const labels = data.datos.map(d => new Date(d.tiempo).toLocaleTimeString());
+                const values = data.datos.map(d => d.valor);
+                const ctx = document.getElementById('preview-frecuencia').getContext('2d');
+                if (window.frecuenciaPreviewChart) {
+                    window.frecuenciaPreviewChart.data.labels = labels;
+                    window.frecuenciaPreviewChart.data.datasets[0].data = values;
+                    window.frecuenciaPreviewChart.options.scales.y.display = true;
+                    window.frecuenciaPreviewChart.options.scales.y.ticks = { color: '#6c757d', callback: function(value) { return value.toFixed(1); } };
+                    window.frecuenciaPreviewChart.update();
+                } else {
+                    window.frecuenciaPreviewChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Frecuencia (Hz)',
+                                data: values,
+                                borderColor: '#0dcaf0',
+                                backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { x: { display: true, grid: { display: false } }, y: { display: true, grid: { display: false }, ticks: { color: '#6c757d', callback: function(value) { return value.toFixed(1); } } } },
+                            elements: { point: { radius: 0 } }
+                        }
+                    });
+                }
+                // Actualizar métricas
+                document.getElementById('current-frecuencia').textContent = data.estadisticas.actual !== null ? data.estadisticas.actual.toFixed(2) + 'Hz' : '-';
+                document.getElementById('max-frecuencia').textContent = data.estadisticas.maximo !== null ? data.estadisticas.maximo.toFixed(2) + 'Hz' : '-';
+                document.getElementById('min-frecuencia').textContent = data.estadisticas.minimo !== null ? data.estadisticas.minimo.toFixed(2) + 'Hz' : '-';
+                if (data.datos.length > 0) {
+                    const lastTime = new Date(data.datos[data.datos.length - 1].tiempo);
+                    document.getElementById('last-update-frecuencia').textContent = 'Última actualización: ' + tiempoTranscurrido(lastTime);
+                } else {
+                    document.getElementById('last-update-frecuencia').textContent = 'Última actualización: -';
+                }
+            });
+    }
+    actualizarPreviewTension();
+    actualizarPreviewFrecuencia();
+    setInterval(actualizarPreviewTension, 10000);
+    setInterval(actualizarPreviewFrecuencia, 10000);
+
+    // Mostrar el dispositivo seleccionado
+    document.getElementById('dispositivo-seleccionado').textContent = '{{ dispositivo_seleccionado if dispositivo_seleccionado else "-" }}';
+
+    // Estado de conexión para previews
+    function actualizarEstadoPreview(tipo) {
+        fetch("{{ url_for('api_estado_dispositivo') }}")
+            .then(resp => resp.json())
+            .then(data => {
+                const badge = document.getElementById('estado-' + tipo);
+                if (badge) {
+                    if (data.conectado) {
+                        badge.className = 'badge bg-success';
+                        badge.innerHTML = '<i class="fas fa-circle me-1"></i>Conectado';
+                    } else {
+                        badge.className = 'badge bg-danger';
+                        badge.innerHTML = '<i class="fas fa-circle me-1"></i>Desconectado';
+                    }
+                }
+            });
+    }
+    actualizarEstadoPreview('tension');
+    actualizarEstadoPreview('frecuencia');
+    setInterval(() => {
+        actualizarEstadoPreview('tension');
+        actualizarEstadoPreview('frecuencia');
+    }, 10000);
+});
+
+function tiempoTranscurrido(date) {
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return `hace ${diff} seg${diff === 1 ? '' : 's'}`;
+    if (diff < 3600) return `hace ${Math.floor(diff/60)} min`;
+    return date.toLocaleTimeString();
+}
+</script>
+
+<style>
+.dashboard-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid rgba(0,0,0,.125);
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.dashboard-icon {
+    width: 60px;
+    text-align: center;
+}
+
+.preview-chart {
+    height: 200px;
+    position: relative;
+}
+
+.metric-preview {
+    padding: 0.5rem;
+}
+
+.metric-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.card-header {
+    background-color: rgba(0,0,0,.03);
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.card-footer {
+    background-color: rgba(0,0,0,.03);
+    border-top: 1px solid rgba(0,0,0,.125);
+}
+
+.dashboard-status .badge {
+    font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-icon {
+        width: 40px;
+    }
+    
+    .dashboard-icon i {
+        font-size: 1.5rem !important;
+    }
+    
+    .preview-chart {
+        height: 150px;
+    }
+}
+</style>
+{% endblock %} 

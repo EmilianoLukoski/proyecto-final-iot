@@ -1,0 +1,409 @@
+{% extends "layout.html" %}
+
+{% block title %}Tensión - VoltLogger{% endblock %}
+
+{% block content %}
+<div class="dashboard-container" style="background: var(--color-bg);">
+    <!-- Header del Dashboard -->
+    <div class="dashboard-header" style="background: var(--color-header);">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <a href="{{ url_for('dashboards') }}" class="btn btn-outline-secondary btn-sm me-3">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <div>
+                            <h1 class="h4 mb-0">
+                                <i class="fas fa-bolt text-warning me-2"></i>
+                                Monitoreo de Tensión
+                            </h1>
+                            <p class="text-muted mb-0">Gráfico de tensión a través del tiempo</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <div class="dashboard-controls me-3">
+                            <!-- Botón de actualizar eliminado -->
+                            <button class="btn btn-outline-secondary btn-sm" id="fullscreenBtn">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i>
+                                <span class="ms-1">Acciones</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="printDashboard()">
+                                    <i class="fas fa-print me-2"></i>Imprimir
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Selector de rango de tiempo -->
+    <div class="container-fluid mt-3 mb-2">
+        <div class="row">
+            <div class="col-md-4 offset-md-8 text-end">
+                <label for="rangoTiempo" class="form-label me-2">Rango de tiempo:</label>
+                <select id="rangoTiempo" class="form-select form-select-sm d-inline-block w-auto rango-tiempo-select">
+                    <option value="30">Últimos 30 minutos</option>
+                    <option value="60">Última hora</option>
+                    <option value="360">Últimas 6 horas</option>
+                    <option value="1440">Último día</option>
+                    <option value="10080">Última semana</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido del Dashboard -->
+    <div class="dashboard-content">
+        <div class="container-fluid">
+            <!-- Barra de estado -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="dashboard-status">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="status-info">
+                                <span class="badge" id="estadoConexion" style="background:#adb5bd; color:#fff;">
+                                    <i class="fas fa-circle me-1"></i>
+                                    Desconectado
+                                </span>
+                                <small class="text-muted">
+                                    Última actualización: <span id="lastUpdate">-</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas principales -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-bolt text-warning"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="tensionActual">-</div>
+                            <div class="metric-label">Tensión Actual</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-arrow-up text-success"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="tensionMax">-</div>
+                            <div class="metric-label">Máximo</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-arrow-down text-danger"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="tensionMin">-</div>
+                            <div class="metric-label">Mínimo</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-chart-line text-info"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="tensionProm">-</div>
+                            <div class="metric-label">Promedio</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico principal -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card" style="background: var(--color-card);">
+                        <div class="card-header" style="background: var(--color-header);">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Variación de Tensión en el Tiempo
+                            </h5>
+                        </div>
+                        <div class="card-body chartjs-bg">
+                            <div class="chart-container" style="box-shadow: 0 4px 16px rgba(33,37,41,0.10); border-radius: 12px;">
+                                <canvas id="tensionChart" width="800" height="400"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de datos -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-table me-2"></i>
+                                Historial de Lecturas
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Hora</th>
+                                            <th>Tensión (V)</th>
+                                            <th>Estado</th>
+                                            <th>Variación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaTension">
+                                        <!-- Se llenará por JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts para funcionalidad del dashboard -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let chartTension = null;
+let autoRefreshInterval = null;
+
+function getTheme() {
+    return document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+}
+
+function tiempoTranscurrido(date) {
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return `hace ${diff} seg${diff === 1 ? '' : 's'}`;
+    if (diff < 3600) return `hace ${Math.floor(diff/60)} min`;
+    return date.toLocaleTimeString();
+}
+
+function actualizarDashboard() {
+    const rango = document.getElementById('rangoTiempo').value;
+    fetch(`{{ url_for('api_tension') }}?rango=${rango}`)
+        .then(resp => resp.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('lastUpdate').textContent = 'Error';
+                return;
+            }
+            // Actualizar métricas
+            document.getElementById('tensionActual').textContent = data.estadisticas.actual !== null ? data.estadisticas.actual.toFixed(2) + ' V' : '-';
+            document.getElementById('tensionMax').textContent    = data.estadisticas.maximo !== null ? data.estadisticas.maximo.toFixed(2) + ' V' : '-';
+            document.getElementById('tensionMin').textContent    = data.estadisticas.minimo !== null ? data.estadisticas.minimo.toFixed(2) + ' V' : '-';
+            document.getElementById('tensionProm').textContent   = data.estadisticas.promedio !== null ? data.estadisticas.promedio.toFixed(2) + ' V' : '-';
+            // Actualizar última actualización real
+            if (data.datos.length > 0) {
+                const lastTime = new Date(data.datos[data.datos.length - 1].tiempo);
+                document.getElementById('lastUpdate').textContent = tiempoTranscurrido(lastTime);
+            } else {
+                document.getElementById('lastUpdate').textContent = '-';
+            }
+
+            // Actualizar gráfico
+            const labels = data.datos.map(d => new Date(d.tiempo).toLocaleTimeString());
+            const values = data.datos.map(d => d.valor);
+            if (!chartTension) {
+                const ctx = document.getElementById('tensionChart').getContext('2d');
+                // Calcular min y max con margen de 1V desde el inicio
+                let yMin = undefined, yMax = undefined;
+                if (values.length > 0) {
+                    const min = Math.min(...values);
+                    const max = Math.max(...values);
+                    yMin = min - 1;
+                    yMax = max + 1;
+                }
+                chartTension = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Tensión (V)',
+                            data: values,
+                            borderColor: '#ffc107',
+                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#ffc107',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: getTheme() === 'dark' ? '#23272b' : 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#ffc107',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Tensión: ' + context.parsed.y + ' V';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: getTheme() === 'dark' ? '#23272b' : 'rgba(33,37,41,0.15)' },
+                                ticks: { color: getTheme() === 'dark' ? '#b0b8c1' : '#212529' }
+                            },
+                            y: {
+                                beginAtZero: false,
+                                min: yMin,
+                                max: yMax,
+                                grid: { color: getTheme() === 'dark' ? '#23272b' : 'rgba(33,37,41,0.15)' },
+                                ticks: {
+                                    color: getTheme() === 'dark' ? '#b0b8c1' : '#212529',
+                                    callback: function(value) { return value + ' V'; }
+                                }
+                            }
+                        },
+                        interaction: { intersect: false, mode: 'index' }
+                    }
+                });
+            } else {
+                chartTension.data.labels = labels;
+                chartTension.data.datasets[0].data = values;
+                // Ajustar límites del eje Y con margen de 1V
+                if (values.length > 0) {
+                    const min = Math.min(...values);
+                    const max = Math.max(...values);
+                    chartTension.options.scales.y.min = min - 1;
+                    chartTension.options.scales.y.max = max + 1;
+                } else {
+                    chartTension.options.scales.y.min = undefined;
+                    chartTension.options.scales.y.max = undefined;
+                }
+                chartTension.update();
+            }
+
+            // Actualizar tabla
+            const tabla = document.getElementById('tablaTension');
+            tabla.innerHTML = '';
+            let prev = null;
+            data.datos.forEach((d, i) => {
+                let estado = '-';
+                const pct = d.valor / 220 * 100;
+                if (pct < 10) estado = '<span class="badge bg-danger">Interrupción</span>';
+                else if (pct >= 10 && pct < 85) estado = '<span class="badge bg-warning text-dark">Caída</span>';
+                else if (pct >= 85 && pct <= 110) estado = '<span class="badge bg-success">Normal</span>';
+                else if (pct > 110) estado = '<span class="badge" style="background-color: #8e24aa; color: #fff;">Sobretensión</span>';
+                let variacion = '-';
+                if (prev !== null) {
+                    let v = d.valor - prev;
+                    if (v > 0) variacion = `<span class='text-success'>+${v.toFixed(1)} V</span>`;
+                    else if (v < 0) variacion = `<span class='text-danger'>${v.toFixed(1)} V</span>`;
+                    else variacion = `<span class='text-muted'>0.0 V</span>`;
+                }
+                tabla.innerHTML += `<tr><td>${new Date(d.tiempo).toLocaleTimeString()}</td><td><strong>${d.valor.toFixed(2)} V</strong></td><td>${estado}</td><td>${variacion}</td></tr>`;
+                prev = d.valor;
+            });
+        })
+        .catch(() => {
+            document.getElementById('lastUpdate').textContent = 'Error';
+        });
+}
+
+function actualizarEstadoConexion() {
+    fetch(`{{ url_for('api_estado_dispositivo') }}`)
+        .then(resp => resp.json())
+        .then(data => {
+            const badge = document.getElementById('estadoConexion');
+            if (data.conectado) {
+                badge.className = 'badge bg-success me-2';
+                badge.innerHTML = '<i class="fas fa-circle me-1"></i>Conectado';
+            } else {
+                badge.className = 'badge bg-danger me-2';
+                badge.innerHTML = '<i class="fas fa-circle me-1"></i>Desconectado';
+            }
+        });
+}
+
+function setupAutoRefresh() {
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(() => {
+        actualizarDashboard();
+        actualizarEstadoConexion();
+    }, 5000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarDashboard();
+    actualizarEstadoConexion();
+    setupAutoRefresh();
+    document.getElementById('rangoTiempo').addEventListener('change', actualizarDashboard);
+    document.getElementById('fullscreenBtn').addEventListener('click', function() {
+        const dashboardContainer = document.querySelector('.dashboard-container');
+        if (!document.fullscreenElement) {
+            dashboardContainer.requestFullscreen().catch(err => {
+                console.log('Error al entrar en pantalla completa:', err);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    });
+});
+
+function printDashboard() {
+    window.print();
+}
+</script>
+
+<style>
+.dashboard-container {
+    min-height: 100vh;
+    background-color: var(--color-bg);
+}
+
+.dashboard-header {
+    background: var(--color-header);
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 0;
+}
+.rango-tiempo-select {
+    background: #fff;
+    color: #212529;
+    border: 1.5px solid #dee2e6;
+    transition: background 0.2s, color 0.2s;
+}
+body.dark-theme .rango-tiempo-select {
+    background: #23272b;
+    color: #f8f9fa;
+    border: 1.5px solid #444950;
+}
+</style>
+{% endblock %} 

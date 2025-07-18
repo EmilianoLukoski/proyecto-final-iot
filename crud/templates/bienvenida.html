@@ -2,15 +2,16 @@
 {% block body %}
   <h1 class="mb-4">Bienvenido, {{ session.get("username") }}</h1>
 
-  <!-- Enlaces rápidos -->
-  <div class="mb-4">
-    <a href="{{ url_for('agregar_nodo') }}" class="btn btn-primary me-2">
-      <i class="bi bi-plus-circle"></i> Agregar Nodo
-    </a>
-    <a href="{{ url_for('listar_brokers') }}" class="btn btn-secondary">
-      <i class="bi bi-bookmarks"></i> Mis Brokers
-    </a>
-  </div>
+  {# Mensaje si no hay dispositivo seleccionado #}
+  {% if not dispositivo_seleccionado %}
+    <div class="alert alert-warning" role="alert">
+      Debes seleccionar un dispositivo para poder ver los dashboards y eventos.
+    </div>
+  {% else %}
+    <div class="alert alert-info" role="alert">
+      Voltlogger es una plataforma web para visualizar en tiempo real la calidad de la tensión y frecuencia eléctrica. Para comenzar, agregá un broker y un dispositivo. Luego podrás seleccionar el dispositivo para ver sus eventos anómalos y gráficos históricos detallados.
+    </div>
+  {% endif %}
 
   <!-- Lista de nodos -->
   <div class="table-responsive">
@@ -31,7 +32,7 @@
               <td>{{ nodo[2] }}</td>                {# nodo[2] = id_dispositivo #}
               <td>{{ nodo[3] }}</td>                {# nodo[3] = dominio del broker #}
               <td class="text-end">
-                <!-- Formulario para seleccionar dispositivo y enviar comandos -->
+                <!-- Formulario para seleccionar dispositivo -->
                 <form method="POST" action="{{ url_for('seleccionar_dispositivo') }}" class="d-inline">
                   <input type="hidden" name="id_dispositivo" value="{{ nodo[2] }}">
                   <button type="submit" class="btn btn-outline-success btn-sm">
@@ -50,25 +51,10 @@
     </table>
   </div>
 
-  <!-- Si hay un dispositivo seleccionado, mostrar botones de acción -->
+  <!-- Si hay un dispositivo seleccionado, mostrar solo el nombre -->
   {% if dispositivo_seleccionado %}
     <div class="mt-4">
       <h4>Dispositivo seleccionado: <span class="fw-bold">{{ dispositivo_seleccionado }}</span></h4>
-      <div class="mt-3 control-buttons">
-        <form method="POST" action="{{ url_for('flash_command') }}" class="d-inline me-2">
-          <button type="submit" class="btn btn-warning">
-            <i class="bi bi-lightning-charge-fill"></i> Destello
-          </button>
-        </form>
-        <form method="GET" action="{{ url_for('setpoint_command') }}" class="d-inline">
-          <div class="input-group">
-            <input type="number" name="setpoint" placeholder="Setpoint" class="form-control" required>
-            <button type="submit" class="btn btn-info">
-              <i class="bi bi-sliders"></i> Setpoint
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
   {% endif %}
 
