@@ -68,7 +68,21 @@ CREATE TABLE `nodos` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;
 
--- 5. Creo el usuario de MySQL y le doy permisos
+-- 5. Tabla para eventos anómalos de los dispositivos
+CREATE TABLE `eventos` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_evento` VARCHAR(64) NOT NULL,
+  `device_id` VARCHAR(32) NOT NULL,
+  `tipo_evento` VARCHAR(32) NOT NULL,
+  `fase` VARCHAR(16) NOT NULL,
+  `tension` FLOAT,
+  `timestamp` DATETIME(3),
+  PRIMARY KEY (`id`),
+  KEY `idx_eventos_device_id` (`device_id`),
+  KEY `idx_eventos_id_evento` (`id_evento`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 6. Creo el usuario de MySQL y le doy permisos
 
 CREATE USER IF NOT EXISTS 'uservoltlogger'@'%' 
   IDENTIFIED BY 'cambiarcambiar';
@@ -78,3 +92,4 @@ GRANT SELECT, INSERT, UPDATE, DELETE
   TO 'uservoltlogger'@'%';
 
 FLUSH PRIVILEGES;
+

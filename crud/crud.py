@@ -224,6 +224,11 @@ def index():
         if not dispositivo_seleccionado and nodos:
             session["id_dispositivo"] = nodos[0][2]  # id_dispositivo del primer nodo
             dispositivo_seleccionado = nodos[0][2]
+            # Iniciar worker automáticamente para el dispositivo seleccionado
+            broker_cfg = get_broker_cfg_for_device(dispositivo_seleccionado)
+            if broker_cfg:
+                start_device_worker(dispositivo_seleccionado, broker_cfg)
+                logging.info(f"Worker iniciado automáticamente para dispositivo: {dispositivo_seleccionado}")
 
         cur.close()
         return render_template(
@@ -333,10 +338,17 @@ def start_device_worker(device_id, broker_cfg):
                     password=broker_cfg["password"],
                     tls_context=ssl_context,
                 ) as mqtt:
-                    topics = [f"voltlogger/{device_id}/tension", f"voltlogger/{device_id}/frecuencia"]
+                    topics = [
+                        f"voltlogger/{device_id}/tension",
+                        f"voltlogger/{device_id}/frecuencia",
+                        f"voltlogger/{device_id}/eventos"  # <-- Agregado
+                    ]
                     for t in topics:
                         await mqtt.subscribe(t)
                     logging.info(f"Suscrito a tópicos MQTT para {device_id}: {topics}")
+                    import json
+                    from dateutil import parser as dateparser
+                    import pymysql
                     async for message in mqtt.messages:
                         topic = str(message.topic)
                         payload = message.payload.decode()
@@ -347,6 +359,12 @@ def start_device_worker(device_id, broker_cfg):
                                 logging.warning(f"Payload inválido para tensión: '{payload}' en {topic}")
                                 continue
                             punto = influxdb_client.Point("tension").tag("device", device_id).field("valor", valor)
+                            try:
+                                write_api.write(bucket=INFLUX_BUCKET, org=INFLUX_ORG, record=punto)
+                                logging.info(f"✅ Dato guardado en InfluxDB: {topic}={payload}")
+                            except Exception as e:
+                                logging.error(f"❌ Error escribiendo en InfluxDB: {e}")
+                                logging.error(f"  Bucket: {INFLUX_BUCKET}, Org: {INFLUX_ORG}")
                         elif topic.endswith("/frecuencia"):
                             try:
                                 valor = float(payload)
@@ -354,14 +372,40 @@ def start_device_worker(device_id, broker_cfg):
                                 logging.warning(f"Payload inválido para frecuencia: '{payload}' en {topic}")
                                 continue
                             punto = influxdb_client.Point("frecuencia").tag("device", device_id).field("valor", valor)
+                            try:
+                                write_api.write(bucket=INFLUX_BUCKET, org=INFLUX_ORG, record=punto)
+                                logging.info(f"✅ Dato guardado en InfluxDB: {topic}={payload}")
+                            except Exception as e:
+                                logging.error(f"❌ Error escribiendo en InfluxDB: {e}")
+                                logging.error(f"  Bucket: {INFLUX_BUCKET}, Org: {INFLUX_ORG}")
+                        elif topic.endswith("/eventos"):
+                            try:
+                                data = json.loads(payload)
+                                id_evento = data.get("id_evento")
+                                tipo_evento = data.get("evento")
+                                fase = data.get("fase")
+                                tension = data.get("tension")
+                                ts_str = data.get("timestamp")
+                                ts = dateparser.isoparse(ts_str) if ts_str else None
+                                # Guardar en MySQL
+                                conn = pymysql.connect(
+                                    host=app.config["MYSQL_HOST"],
+                                    user=app.config["MYSQL_USER"],
+                                    password=app.config["MYSQL_PASSWORD"],
+                                    db=app.config["MYSQL_DB"]
+                                )
+                                with conn:
+                                    with conn.cursor() as cur:
+                                        cur.execute(
+                                            "INSERT INTO eventos (id_evento, device_id, tipo_evento, fase, tension, timestamp) VALUES (%s, %s, %s, %s, %s, %s)",
+                                            (id_evento, device_id, tipo_evento, fase, tension, ts)
+                                        )
+                                        conn.commit()
+                                logging.info(f"Evento guardado: {id_evento} {tipo_evento} {fase} {tension} {ts}")
+                            except Exception as e:
+                                logging.error(f"Error procesando evento anómalo: {e}")
                         else:
                             continue
-                        try:
-                            write_api.write(bucket=INFLUX_BUCKET, org=INFLUX_ORG, record=punto)
-                            logging.info(f"✅ Dato guardado en InfluxDB: {topic}={payload}")
-                        except Exception as e:
-                            logging.error(f"❌ Error escribiendo en InfluxDB: {e}")
-                            logging.error(f"  Bucket: {INFLUX_BUCKET}, Org: {INFLUX_ORG}")
             except Exception as e:
                 logging.error(f"Error en worker MQTT para {device_id}: {e}")
             finally:
@@ -702,6 +746,21 @@ def dashboard_frecuencia():
         return redirect(url_for('dashboards'))
 
 
+@app.route('/dashboards/eventos')
+@require_login
+def dashboard_eventos():
+    try:
+        return render_template(
+            'dashboards/eventos.html',
+            username=session.get("username"),
+            tema_preferido=session.get("tema")
+        )
+    except Exception as e:
+        logging.error(f"Error al cargar dashboard de eventos: {str(e)}")
+        flash("Error al cargar el dashboard de eventos", "danger")
+        return redirect(url_for('dashboards'))
+
+
 @app.route('/api/tension')
 @require_login
 def api_tension():
@@ -821,6 +880,43 @@ def api_frecuencia():
 
         client.close()
         return jsonify({"datos": datos, "estadisticas": estadisticas})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/eventos')
+@require_login
+def api_eventos():
+    try:
+        device_id = session.get('id_dispositivo')
+        if not device_id:
+            return jsonify({"error": "No hay dispositivo seleccionado"}), 400
+
+        cur = mysql.connection.cursor()
+        cur.execute(
+            "SELECT id_evento, tipo_evento, fase, tension, timestamp "
+            "FROM eventos WHERE device_id = %s ORDER BY timestamp ASC",
+            (device_id,)
+        )
+        filas = cur.fetchall()
+        cur.close()
+
+        eventos = {}
+        for fila in filas:
+            id_evento, tipo_evento, fase, tension, timestamp = fila
+            if id_evento not in eventos:
+                eventos[id_evento] = {
+                    "id_evento": id_evento,
+                    "tipo_evento": tipo_evento,
+                    "fases": {}
+                }
+            eventos[id_evento]["fases"][fase] = {
+                "tension": tension,
+                "timestamp": timestamp.isoformat() if timestamp else None
+            }
+
+        # Convertir a lista
+        eventos_list = list(eventos.values())
+        return jsonify(eventos_list)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

@@ -1,0 +1,183 @@
+{% extends 'layout.html' %}
+{% block title %}Eventos Anómalos{% endblock %}
+{% block content %}
+<style>
+.card-evento {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    border: 1px solid #e3e3e3;
+    margin-bottom: 1rem;
+}
+.btn-toggle-evento {
+    font-weight: 500;
+    font-size: 1.1rem;
+    background: #f8f9fa;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.2s, color 0.2s;
+    color: #212529;
+}
+.btn-toggle-evento:hover, .btn-toggle-evento:focus {
+    background: #e9ecef;
+    color: #212529;
+}
+[data-theme="dark"] .btn-toggle-evento, body.dark-theme .btn-toggle-evento {
+    background: #23272b;
+    color: #f8f9fa;
+}
+[data-theme="dark"] .btn-toggle-evento:hover, [data-theme="dark"] .btn-toggle-evento:focus, body.dark-theme .btn-toggle-evento:hover, body.dark-theme .btn-toggle-evento:focus {
+    background: #343a40;
+    color: #f8f9fa;
+}
+.flecha {
+    transition: transform 0.2s;
+    font-size: 1.2em;
+    margin-left: 10px;
+    display: inline-block;
+}
+.flecha.abierta {
+    transform: rotate(180deg);
+}
+</style>
+<div class="container mt-4">
+    <h2 class="mb-4">Eventos Anómalos</h2>
+    <div id="eventos-lista">
+        <div class="alert alert-info" id="cargando-eventos">Cargando eventos...</div>
+    </div>
+</div>
+<script>
+const FASES_ORDEN = ['inicio', 'peor', 'fin'];
+const FASES_LABEL = {inicio: 'Inicio', peor: 'Peor', fin: 'Fin'};
+let intervalId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de eventos cargada, iniciando actualización automática...');
+    cargarEventos();
+    // Actualizar cada 30 segundos
+    intervalId = setInterval(function() {
+        console.log('Actualizando eventos automáticamente...');
+        cargarEventos();
+    }, 30000);
+});
+
+function cargarEventos() {
+    console.log('Cargando eventos desde API...');
+    fetch('/voltlogger/api/eventos')
+        .then(resp => resp.json())
+        .then(data => {
+            console.log('Datos recibidos:', data);
+            mostrarEventos(data);
+        })
+        .catch(error => {
+            console.error('Error cargando eventos:', error);
+            document.getElementById('eventos-lista').innerHTML = '<div class="alert alert-danger">Error al cargar los eventos</div>';
+        });
+}
+
+function mostrarEventos(eventos) {
+    const cont = document.getElementById('eventos-lista');
+    cont.innerHTML = '';
+    if (!Array.isArray(eventos) || eventos.length === 0) {
+        cont.innerHTML = '<div class="alert alert-warning">No hay eventos registrados para este dispositivo.</div>';
+        return;
+    }
+    let html = '';
+    eventos.forEach((ev, idx) => {
+        const fases = ev.fases || {};
+        let filas = '';
+        FASES_ORDEN.forEach(fase => {
+            const datos = fases[fase];
+            let fecha = '-';
+            let hora = '-';
+            if (datos && datos.timestamp) {
+                const partes = datos.timestamp.split('T');
+                fecha = partes[0];
+                if (partes[1]) {
+                    // Extraer hora con milisegundos si están disponibles
+                    const tiempoCompleto = partes[1];
+                    if (tiempoCompleto.includes('.')) {
+                        // Formato con milisegundos: "14:30:00.123" o "14:30:00.123-03:00"
+                        const tiempoPartes = tiempoCompleto.split('.');
+                        const horaBase = tiempoPartes[0];
+                        const milisegundos = tiempoPartes[1].split('-')[0].split('+')[0].substring(0, 3);
+                        hora = `${horaBase}.${milisegundos}`;
+                    } else {
+                        // Formato sin milisegundos: "14:30:00" o "14:30:00-03:00"
+                        hora = tiempoCompleto.split('-')[0].split('+')[0];
+                    }
+                }
+            }
+            filas += `<tr>
+                <td>${FASES_LABEL[fase]}</td>
+                <td>${(datos && datos.tension !== undefined && datos.tension !== null) ? datos.tension + ' V' : '-'}</td>
+                <td>${fecha}</td>
+                <td>${hora}</td>
+            </tr>`;
+        });
+        const enCurso = !fases.fin;
+        html += `
+        <div class="card card-evento">
+            <div class="card-header p-0">
+                <button class="btn-toggle-evento" type="button" onclick="toggleEventoDetalle('eventoDetalle${idx}', this)">
+                    <span>
+                        <b>${ev.tipo_evento ? ev.tipo_evento.toUpperCase() : '-'}</b>
+                        &nbsp; | &nbsp; <span class="text-secondary">ID:</span> ${ev.id_evento}
+                        &nbsp; | &nbsp; <span class="text-secondary">Inicio:</span> ${fases.inicio && fases.inicio.timestamp ? fases.inicio.timestamp.replace('T',' ').substring(0,19) : '-'}
+                        ${enCurso ? '<span class="badge bg-warning text-dark ms-2">En curso</span>' : ''}
+                    </span>
+                    <span class="flecha">&#9660;</span>
+                </button>
+            </div>
+            <div class="collapse" id="eventoDetalle${idx}">
+                <div class="card-body">
+                    <table class="table table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Fase</th>
+                                <th>Tensión</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filas}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>`;
+    });
+    cont.innerHTML = html;
+    // Abre el primer evento por defecto
+    const first = cont.querySelector('.collapse');
+    const firstFlecha = cont.querySelector('.flecha');
+    if (first) {
+        first.classList.add('show');
+        if (firstFlecha) firstFlecha.classList.add('abierta');
+    }
+}
+
+// Función global para mostrar/ocultar detalles y rotar flecha
+window.toggleEventoDetalle = function(id, btn) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('show');
+    if (btn) {
+        const flecha = btn.querySelector('.flecha');
+        if (flecha) flecha.classList.toggle('abierta');
+    }
+}
+
+// Limpiar el intervalo cuando se abandona la página
+window.addEventListener('beforeunload', function() {
+    if (intervalId) {
+        clearInterval(intervalId);
+    }
+});
+</script>
+{% endblock %} 
