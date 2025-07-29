@@ -15,7 +15,7 @@ El backend está desarrollado en Python utilizando el framework Flask, proporcio
 - Sistema de autenticación robusto: Utiliza sesiones para mantener el estado de los usuarios y proteger las rutas sensibles
 - Seguridad avanzada: Las contraseñas se almacenan usando el algoritmo de hash scrypt, resistente a ataques de fuerza bruta
 - Comunicación MQTT asíncrona: Realizada de forma asíncrona permitiendo operaciones no bloqueantes y mejorando el rendimiento
-- Encriptación de credenciales: Las credenciales de los brokers MQTT se encriptan usando Fernet, asegurando protección de información sensible
+- Encriptación de credenciales: Las credenciales de los brokers MQTT se encriptan, asegurando protección de información sensible
 - Validación exhaustiva: Se implementa validación de conexiones MQTT y DNS para garantizar fiabilidad
 - Sistema de logging detallado: Registra todas las operaciones importantes para facilitar el diagnóstico
 
@@ -116,7 +116,7 @@ El sistema está completamente containerizado para facilitar su despliegue:
 El sistema implementa múltiples capas de seguridad:
 
 - Hashing avanzado: Contraseñas hasheadas con scrypt
-- Encriptación de credenciales: Fernet para datos sensibles
+- Encriptación de credenciales: Para datos sensibles
 - Gestión segura de sesiones: Protección de rutas sensibles
 - Validación de datos: Prevención de inyecciones SQL y otros ataques
 - Comunicación TLS: MQTT sobre TLS para transmisión segura
