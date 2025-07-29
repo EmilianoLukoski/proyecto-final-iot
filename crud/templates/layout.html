@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Nodos IoT</title>
+    <title>VoltLogger</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -16,9 +16,9 @@
 <body>
     <!-- Barra de navegación -->
     <nav class="navbar navbar-expand-lg navbar-light mb-4">
-        <div class="container">
+        <div class="container-fluid px-4 px-md-5">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="bi bi-cpu"></i> Control IoT
+                <i class="bi bi-cpu"></i> VoltLogger
             </a>
             {% if session.get("user_id") %}
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -85,11 +85,26 @@
     {% endif %}
 
     <!-- Contenido principal -->
-    <div class="container">
+    <div class="container-fluid px-4 px-md-5">
         {% block content %}
         {% block body %}{% endblock %}
         {% endblock %}
     </div>
+
+    <footer class="footer bg-dark text-white py-2 small fixed-bottom shadow-lg">
+      <div class="container-fluid d-flex justify-content-between align-items-center px-4 px-md-5">
+        <div>
+          <span class="me-2">© Emiliano Lukoski 2025</span>
+        </div>
+        <div>
+          <a href="#" class="text-white ms-2" title="Enviar Email" onclick="return abrirGmail(event)">
+            <i class="fas fa-envelope"></i>
+          </a>
+          <a href="https://github.com/EmilianoLukoski" class="text-white ms-3" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
+        </div>
+      </div>
+    </footer>
+    <!-- Puedes agregar aquí más detalles visuales globales -->
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -133,6 +148,27 @@
                 updateTheme(!isDark);
             });
         });
+
+        // Función para abrir Gmail
+        function abrirGmail(event) {
+            event.preventDefault();
+            
+            const email = 'emidariel2012@gmail.com';
+            const subject = 'Consulta VoltLogger';
+            const body = `Hola Emiliano,
+
+[Escribe tu consulta aquí]
+
+Saludos.`;
+            
+            // Abrir Gmail directamente
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            // Abrir en nueva pestaña
+            window.open(gmailUrl, '_blank');
+            
+            return false;
+        }
     </script>
 </body>
 </html> 

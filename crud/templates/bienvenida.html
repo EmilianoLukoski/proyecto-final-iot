@@ -1,6 +1,7 @@
 {% extends 'layout.html' %}
 {% block body %}
-  <h1 class="mb-4">Bienvenido, {{ session.get("username") }}</h1>
+<div class="container-fluid fade-in">
+  <h1 class="mb-4"><i class="fas fa-bolt text-warning me-2"></i>Bienvenido, <span class="text-primary fw-bold">{{ session.get("username") }}</span></h1>
 
   {# Mensaje si no hay dispositivo seleccionado #}
   {% if not dispositivo_seleccionado %}
@@ -8,14 +9,15 @@
       Debes seleccionar un dispositivo para poder ver los dashboards y eventos.
     </div>
   {% else %}
-    <div class="alert alert-info" role="alert">
-      Voltlogger es una plataforma web para visualizar en tiempo real la calidad de la tensión y frecuencia eléctrica. Para comenzar, agregá un broker y un dispositivo. Luego podrás seleccionar el dispositivo para ver sus eventos anómalos y gráficos históricos detallados.
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+      <i class="fas fa-info-circle me-2"></i>
+      VoltLogger es una plataforma web para visualizar en tiempo real la calidad de la tensión y frecuencia eléctrica. Para comenzar, agregá un broker y un dispositivo. Luego podrás seleccionar el dispositivo para ver sus eventos anómalos y gráficos históricos detallados.
     </div>
   {% endif %}
 
   <!-- Lista de nodos -->
-  <div class="table-responsive">
-    <table class="table table-striped align-middle">
+  <div class="table-responsive w-100">
+    <table class="table table-striped align-middle shadow rounded w-100">
       <thead class="table-dark">
         <tr>
           <th>Nombre</th>

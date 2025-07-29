@@ -518,6 +518,221 @@
     background-color: #2c3034 !important;
     color: #fff !important;
   }
+  /* Footer estilizado */
+  .footer {
+    background: #fff !important;
+    color: #212529 !important;
+    font-size: 0.85rem;
+    border-top: 2px solid #ffc107;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+    letter-spacing: 0.5px;
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    min-height: 28px;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+  }
+  .footer a, .footer .fa-envelope, .footer .fa-github {
+    color: #212529 !important;
+  }
+  .footer a {
+    text-decoration: none;
+    margin: 0 0.15em;
+    font-size: 1em;
+    transition: color 0.2s;
+    vertical-align: middle;
+  }
+  .footer a:hover {
+    color: #ffc107 !important;
+    text-decoration: none;
+  }
+  .footer .fa-envelope, .footer .fa-github {
+    font-size: 1.05em;
+    vertical-align: middle;
+  }
+  body.dark-theme .footer {
+    background: #181a1b !important;
+    color: #f8f9fa !important;
+    border-top: 2px solid #17a2b8;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+  }
+  body.dark-theme .footer a, body.dark-theme .footer .fa-envelope, body.dark-theme .footer .fa-github {
+    color: #f8f9fa !important;
+  }
+  body.dark-theme .footer a:hover {
+    color: #17a2b8 !important;
+  }
+  /* Tarjetas con efecto hover */
+  .card:hover {
+    box-shadow: 0 8px 24px rgba(33,37,41,0.18), 0 1.5px 6px rgba(0,0,0,0.08);
+    transform: translateY(-2px) scale(1.01);
+    border-color: #ffc107;
+  }
+  /* Botones destacados */
+  .btn-primary, .btn-success, .btn-warning {
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .btn-primary:hover, .btn-success:hover, .btn-warning:hover {
+    box-shadow: 0 4px 16px rgba(33,37,41,0.12);
+    filter: brightness(1.08);
+  }
+  /* Inputs más modernos */
+  .form-control {
+    border-radius: 8px;
+    border: 1.5px solid #ced4da;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: border 0.2s, box-shadow 0.2s;
+  }
+  .form-control:focus {
+    border-color: #ffc107;
+    box-shadow: 0 0 0 2px rgba(255,193,7,0.15);
+  }
+  /* --- Animaciones y transiciones globales --- */
+  .fade-in {
+    animation: fadeIn 0.7s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+  .shadow-elevate {
+    box-shadow: 0 6px 24px rgba(33,37,41,0.16), 0 1.5px 6px rgba(0,0,0,0.10) !important;
+    transition: box-shadow 0.3s;
+  }
+  .shadow-elevate:hover {
+    box-shadow: 0 12px 32px rgba(33,37,41,0.22), 0 2px 8px rgba(0,0,0,0.13) !important;
+    z-index: 2;
+  }
+  /* Ripple effect para botones */
+  .btn-ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-ripple:after {
+    content: "";
+    display: block;
+    position: absolute;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    left: 50%;
+    top: 50%;
+    pointer-events: none;
+    background: rgba(255,193,7,0.25);
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0.4s, opacity 0.8s;
+    opacity: 0;
+  }
+  .btn-ripple:active:after {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    transition: 0s;
+  }
+  /* Skeleton loader */
+  .skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+    background-size: 400% 100%;
+    animation: skeleton-loading 1.2s ease-in-out infinite;
+    border-radius: 8px;
+    min-height: 1.2em;
+  }
+  @keyframes skeleton-loading {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+  /* Tablas más modernas */
+  .table {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s;
+  }
+  .table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #f8f9fa;
+  }
+  body.dark-theme .table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #23272b;
+  }
+  .table th, .table td {
+    vertical-align: middle;
+    transition: background 0.2s;
+  }
+  .table-hover tbody tr:hover {
+    background-color: #ffe082;
+    transition: background 0.2s;
+  }
+  body.dark-theme .table-hover tbody tr:hover {
+    background-color: #343a40;
+  }
+  /* Alertas con iconos y mejor contraste */
+  .alert {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font-size: 1.05em;
+  }
+  .alert i {
+    font-size: 1.2em;
+    margin-right: 0.4em;
+  }
+  /* Separadores sutiles */
+  .divider {
+    border-top: 1.5px solid #e0e0e0;
+    margin: 1.5em 0;
+  }
+  body.dark-theme .divider {
+    border-top: 1.5px solid #343a40;
+  }
+  /* Inputs animados */
+  .form-control {
+    transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  .form-control:focus {
+    background: #fffbe6;
+  }
+  body.dark-theme .form-control:focus {
+    background: #23272b;
+  }
+  /* Tooltips personalizados */
+  .custom-tooltip {
+    background: #212529;
+    color: #ffc107;
+    border-radius: 6px;
+    padding: 0.4em 0.8em;
+    font-size: 0.95em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  }
+  html {
+    font-size: 17px;
+  }
+  @media (max-width: 768px) {
+    html {
+      font-size: 16px;
+    }
+  }
+  body {
+    zoom: 0.92;
+  }
+  .card, .table, .dashboard-card, .table-responsive {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .container-fluid, .container {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+  @media (max-width: 768px) {
+    .container-fluid, .container {
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+    }
+  }
 </style>
 
 <script>

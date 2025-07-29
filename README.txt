@@ -1,123 +1,264 @@
-SISTEMA DE CONTROL IoT - Lukoski Emiliano Dariel
-================================================
+# VoltLogger - Sistema de Monitoreo IoT
+## Sistema de Control y Monitoreo de Dispositivos IoT - Lukoski Emiliano Dariel
 
-Este sistema es una aplicación web para el control y monitoreo de dispositivos IoT a través de brokers MQTT.
+Este sistema es una aplicación web completa para el control y monitoreo de dispositivos IoT a través de brokers MQTT, con capacidades avanzadas de visualización de datos y detección de eventos anómalos.
 
-DESCRIPCIÓN GENERAL
-------------------
-El sistema permite a los usuarios gestionar sus dispositivos IoT, configurar brokers MQTT y enviar comandos a los dispositivos de forma segura. Está diseñado para ser una solución completa que facilite la interacción con dispositivos IoT de manera intuitiva y segura, permitiendo a los usuarios tener control total sobre sus dispositivos a través de una interfaz web moderna.
+## 📋 Descripción General
 
-COMPONENTES PRINCIPALES
-----------------------
+VoltLogger es una solución integral que permite a los usuarios gestionar sus dispositivos IoT, configurar brokers MQTT, monitorear datos en tiempo real y detectar eventos anómalos de forma segura. Está diseñado para ser una plataforma completa que facilite la interacción con dispositivos IoT de manera intuitiva y segura, proporcionando dashboards avanzados para el análisis de datos.
 
-1. BACKEND (Flask)
------------------
-El backend está desarrollado en Python utilizando el framework Flask, que proporciona una base sólida para construir aplicaciones web. La implementación incluye:
+## 🏗️ Componentes Principales
 
-- Sistema de autenticación robusto que utiliza sesiones para mantener el estado de los usuarios y proteger las rutas sensibles.
-- Las contraseñas se almacenan de forma segura utilizando el algoritmo de hash scrypt, que es resistente a ataques de fuerza bruta.
-- La comunicación con los brokers MQTT se realiza de forma asíncrona, permitiendo operaciones no bloqueantes y mejorando el rendimiento.
-- Las credenciales de los brokers MQTT se encriptan usando Fernet, asegurando que la información sensible esté protegida.
-- Se implementa una validación exhaustiva de las conexiones MQTT y DNS para garantizar la fiabilidad de las comunicaciones.
-- Un sistema de logging detallado que registra todas las operaciones importantes para facilitar el diagnóstico de problemas.
+### 1. BACKEND (Flask)
+El backend está desarrollado en Python utilizando el framework Flask, proporcionando una base sólida para construir aplicaciones web:
 
-2. FRONTEND
-----------
+- **Sistema de autenticación robusto**: Utiliza sesiones para mantener el estado de los usuarios y proteger las rutas sensibles
+- **Seguridad avanzada**: Las contraseñas se almacenan usando el algoritmo de hash scrypt, resistente a ataques de fuerza bruta
+- **Comunicación MQTT asíncrona**: Realizada de forma asíncrona permitiendo operaciones no bloqueantes y mejorando el rendimiento
+- **Encriptación de credenciales**: Las credenciales de los brokers MQTT se encriptan usando Fernet, asegurando protección de información sensible
+- **Validación exhaustiva**: Se implementa validación de conexiones MQTT y DNS para garantizar fiabilidad
+- **Sistema de logging detallado**: Registra todas las operaciones importantes para facilitar el diagnóstico
+
+### 2. FRONTEND
 La interfaz de usuario está construida con un enfoque en la experiencia del usuario y la accesibilidad:
 
-- Utiliza Bootstrap 5 para crear una interfaz responsiva que se adapta a diferentes tamaños de pantalla.
-- Implementa un sistema de temas claro/oscuro que persiste entre sesiones, mejorando la experiencia visual del usuario.
-- Incorpora iconos de Bootstrap y Font Awesome para una interfaz más intuitiva y atractiva.
-- Los mensajes flash proporcionan feedback inmediato al usuario sobre sus acciones.
-- Los formularios incluyen validación tanto del lado del cliente como del servidor.
-- Las tablas responsivas permiten una visualización clara de los datos en cualquier dispositivo.
-- El diseño sigue las mejores prácticas de UX/UI para una experiencia de usuario óptima.
+- **Bootstrap 5**: Interfaz responsiva que se adapta a diferentes tamaños de pantalla
+- **Sistema de temas dinámico**: Tema claro/oscuro que persiste entre sesiones y se actualiza dinámicamente
+- **Iconos modernos**: Bootstrap y Font Awesome para una interfaz intuitiva y atractiva
+- **Feedback inmediato**: Mensajes flash proporcionan retroalimentación al usuario
+- **Validación dual**: Formularios con validación tanto del lado del cliente como del servidor
+- **Tablas responsivas**: Visualización clara de datos en cualquier dispositivo
+- **Diseño UX/UI optimizado**: Sigue las mejores prácticas para una experiencia óptima
 
-3. BASE DE DATOS (MySQL)
------------------------
-La base de datos está diseñada para almacenar y gestionar eficientemente la información del sistema:
+### 3. BASE DE DATOS (MySQL + InfluxDB)
+Sistema de almacenamiento híbrido diseñado para máxima eficiencia:
 
-- La tabla 'usuarios' almacena las credenciales de los usuarios y sus preferencias, como el tema de la interfaz.
-- La tabla 'brokers' contiene la configuración de los brokers MQTT, incluyendo credenciales encriptadas.
-- La tabla 'nodos' relaciona los dispositivos IoT con los usuarios y sus respectivos brokers.
+#### MySQL (Datos de configuración):
+- **Tabla 'usuarios'**: Credenciales de usuarios y preferencias (tema de interfaz)
+- **Tabla 'brokers'**: Configuración de brokers MQTT con credenciales encriptadas
+- **Tabla 'nodos'**: Relación entre dispositivos IoT, usuarios y brokers
+- **Tabla 'eventos'**: Almacenamiento de eventos anómalos detectados
 
-4. DOCKER
---------
-El sistema está containerizado para facilitar su despliegue y mantenimiento:
+#### InfluxDB (Datos de series temporales):
+- **Almacenamiento optimizado**: Para datos de tensión y frecuencia en tiempo real
+- **Retención configurable**: Políticas de retención de datos personalizables
+- **Consultas eficientes**: Optimizado para análisis temporal de datos
 
-- El contenedor principal utiliza Python 3.11, asegurando compatibilidad con las últimas características del lenguaje.
-- La configuración se maneja a través de variables de entorno, permitiendo flexibilidad en diferentes entornos.
-- Se utiliza una red proxy para la comunicación entre servicios.
-- Los datos persisten entre reinicios del contenedor.
-- El sistema está configurado para reiniciarse automáticamente en caso de fallos.
+### 4. DOCKER
+El sistema está completamente containerizado para facilitar su despliegue:
 
-FUNCIONALIDADES PRINCIPALES
---------------------------
+- **Contenedor principal**: Python 3.11 con todas las dependencias
+- **Configuración flexible**: Variables de entorno para diferentes entornos
+- **Red proxy**: Comunicación segura entre servicios
+- **Persistencia de datos**: Datos preservados entre reinicios
+- **Auto-recuperación**: Reinicio automático en caso de fallos
 
-1. Gestión de Usuarios
-El sistema permite a los usuarios registrarse e iniciar sesión de forma segura. Durante el registro, se validan las credenciales y se almacenan de forma segura. El inicio de sesión utiliza sesiones para mantener el estado del usuario y proteger las rutas sensibles. Los usuarios pueden personalizar su experiencia seleccionando entre un tema claro u oscuro.
+## 🚀 Funcionalidades Principales
 
-2. Gestión de Brokers MQTT
-Los usuarios pueden agregar, editar y eliminar brokers MQTT. Cada broker se configura con su dominio, credenciales y puerto TLS. Las credenciales se almacenan de forma segura utilizando encriptación. El sistema valida la conectividad con los brokers antes de permitir su uso.
+### 1. Gestión de Usuarios
+- **Registro seguro**: Validación de credenciales y almacenamiento seguro
+- **Inicio de sesión**: Sistema de sesiones para mantener estado del usuario
+- **Personalización**: Selección de tema claro/oscuro con persistencia
+- **Protección de rutas**: Middleware de autenticación para rutas sensibles
 
-3. Gestión de Nodos IoT
-Los usuarios pueden agregar nuevos dispositivos IoT y asociarlos a brokers específicos. Cada dispositivo se identifica con un nombre y un ID único. El sistema permite listar todos los dispositivos asociados a un usuario, facilitando su gestión.
+### 2. Gestión de Brokers MQTT
+- **Configuración completa**: Agregar, editar y eliminar brokers MQTT
+- **Validación de conectividad**: Verificación automática de conexiones
+- **Encriptación**: Credenciales almacenadas de forma segura
+- **Configuración TLS**: Soporte completo para conexiones seguras
 
-4. Control de Dispositivos
-Los usuarios pueden seleccionar un dispositivo activo y enviar comandos como destellos o configurar setpoints. La comunicación con los dispositivos se realiza a través de MQTT con TLS, asegurando que los datos se transmitan de forma segura.
+### 3. Gestión de Nodos IoT
+- **Asociación de dispositivos**: Vincular dispositivos con brokers específicos
+- **Identificación única**: Sistema de IDs únicos para cada dispositivo
+- **Listado organizado**: Visualización clara de dispositivos por usuario
+- **Selección dinámica**: Cambio de dispositivo activo en tiempo real
 
-SEGURIDAD
----------
-El sistema implementa múltiples capas de seguridad para proteger los datos y las comunicaciones:
+### 4. Dashboards Avanzados
 
-- Las contraseñas se hashean usando scrypt, un algoritmo resistente a ataques de fuerza bruta.
-- Las credenciales de los brokers MQTT se encriptan usando Fernet.
-- Las sesiones se gestionan de forma segura para proteger las rutas sensibles.
-- Se implementa validación de datos para prevenir inyecciones SQL y otros ataques.
-- La comunicación con los brokers MQTT utiliza TLS para asegurar la transmisión de datos.
-- El sistema está protegido contra inyecciones SQL y otros ataques comunes.
+#### Dashboard de Tensión
+- **Visualización en tiempo real**: Gráficos interactivos con Chart.js
+- **Rangos de tiempo configurables**: Últimos 30 min, 1 hora, 6 horas, 1 día, 3 días, 1 semana
+- **Estadísticas automáticas**: Valores actual, máximo, mínimo y promedio
+- **Detección de estados**: Normal, Caída, Interrupción, Sobretensión
+- **Exportación de datos**: CSV y PDF con formato optimizado
+- **Ejes dinámicos**: Formato automático según rango de tiempo
 
-REQUISITOS TÉCNICOS
-------------------
-Para ejecutar el sistema, se requiere:
+#### Dashboard de Frecuencia
+- **Monitoreo continuo**: Datos de frecuencia en tiempo real
+- **Análisis temporal**: Visualización de tendencias y patrones
+- **Estados automáticos**: Baja, Normal, Alta según rangos estándar
+- **Exportación completa**: Datos en formatos CSV y PDF
+- **Interfaz consistente**: Misma experiencia que el dashboard de tensión
 
-- Python 3.11 o superior, que proporciona las características necesarias para el desarrollo.
-- MySQL/MariaDB para el almacenamiento de datos.
-- Docker y Docker Compose para la containerización y despliegue.
-- Acceso a brokers MQTT con soporte TLS para la comunicación segura.
+#### Dashboard de Eventos
+- **Detección automática**: Eventos anómalos capturados en tiempo real
+- **Paginación inteligente**: 3 eventos por página para mejor navegación
+- **Panel de estadísticas**: Total de eventos, duración promedio, eventos en curso
+- **Gráfico de eventos diarios**: Visualización de eventos por día/semana
+- **Cálculo de duración**: Tiempo transcurrido entre inicio y fin de eventos
+- **Exportación detallada**: Información completa en CSV y PDF
+- **Tema dinámico**: Colores que se adaptan automáticamente al tema
 
-CONFIGURACIÓN
-------------
-El sistema se configura mediante variables de entorno, que incluyen:
+### 5. Control de Dispositivos
+- **Selección dinámica**: Cambio de dispositivo activo en tiempo real
+- **Comandos seguros**: Envío de comandos a través de MQTT con TLS
+- **Monitoreo de estado**: Verificación de conectividad en tiempo real
+- **Workers automáticos**: Inicio automático de monitoreo por dispositivo
 
-- CRUD_USER: Usuario de la base de datos.
-- CRUD_PASS: Contraseña de la base de datos.
-- CRUD_DB: Nombre de la base de datos.
-- MARIADB_SERVER: Servidor de la base de datos.
-- FLASK_SECRET_KEY: Clave secreta para las sesiones de Flask.
-- FERNET_KEY: Clave para la encriptación de credenciales.
-- MQTT_*: Configuración del broker MQTT por defecto.
+### 6. Funcionalidades de Exportación
+- **Exportación CSV**: Datos formateados para análisis externo
+- **Exportación PDF**: Reportes profesionales con estadísticas
+- **Sin caracteres especiales**: Codificación optimizada para compatibilidad universal
+- **Formato consistente**: Estructura uniforme en todos los dashboards
 
-CONFIGURACIÓN DE RED Y PROXY INVERSO
------------------------------------
-El sistema está configurado para funcionar detrás de un proxy inverso SWAG (Secure Web Application Gateway):
+## 🔒 Seguridad
 
-- El contenedor SWAG actúa como proxy inverso y maneja las conexiones HTTPS.
-- La configuración del proxy se realiza mediante el archivo `tareaflask2.subfolder.conf.sample` ubicado en `/swag/nginx/proxy-confs/`.
-- El sistema redirige las peticiones de `/tareaflask2` a `/tareaflask2/` para mantener una estructura de URL consistente.
-- Se configura el proxy para manejar correctamente los encabezados X-Forwarded-* para mantener la información del cliente original.
+El sistema implementa múltiples capas de seguridad:
 
-Arquitectura de Red:
-- Todos los contenedores (crudflask2, SWAG, MariaDB, phpMyAdmin) están en la misma red Docker.
-- La comunicación entre contenedores se realiza a través de esta red interna.
-- El puerto 8001 del contenedor crudflask2 está expuesto internamente para la comunicación con SWAG.
-- SWAG maneja la exposición segura del servicio al exterior a través de HTTPS.
+- **Hashing avanzado**: Contraseñas hasheadas con scrypt
+- **Encriptación de credenciales**: Fernet para datos sensibles
+- **Gestión segura de sesiones**: Protección de rutas sensibles
+- **Validación de datos**: Prevención de inyecciones SQL y otros ataques
+- **Comunicación TLS**: MQTT sobre TLS para transmisión segura
+- **Protección CSRF**: Tokens de seguridad en formularios
+- **Headers de seguridad**: Configuración CORS y otras protecciones
 
-Configuración del Proxy:
-Como en el archivo de esta carpeta llamado tareaflask2.subfolder.conf.sample
+## 📊 Características Técnicas Avanzadas
 
-Esta configuración asegura que:
-- Las peticiones se redirijan correctamente al contenedor crudflask2.
-- Se mantenga la información del cliente original.
-- La aplicación funcione correctamente en un subdirectorio.
-- La comunicación entre servicios sea segura y eficiente.
+### Monitoreo en Tiempo Real
+- **Workers MQTT**: Hilos independientes por dispositivo
+- **Suscripción automática**: Tópicos voltlogger/{device_id}/tension, frecuencia, eventos
+- **Procesamiento asíncrono**: Sin bloqueo de la interfaz principal
+- **Reconexión automática**: Recuperación automática de conexiones perdidas
+
+### Visualización de Datos
+- **Chart.js avanzado**: Gráficos interactivos y responsivos
+- **Actualización dinámica**: Datos que se actualizan automáticamente
+- **Temas adaptativos**: Colores que cambian según el tema seleccionado
+- **Optimización de rendimiento**: Límites de datos y paginación
+
+### Gestión de Eventos
+- **Detección automática**: Captura de eventos anómalos desde MQTT
+- **Almacenamiento estructurado**: Fases de eventos (inicio, peor, fin)
+- **Análisis temporal**: Cálculo automático de duraciones
+- **Categorización**: Tipos de eventos y estados
+
+## 🛠️ Requisitos Técnicos
+
+Para ejecutar el sistema se requiere:
+
+- **Python 3.11+**: Características avanzadas del lenguaje
+- **MySQL/MariaDB**: Almacenamiento de datos de configuración
+- **InfluxDB**: Base de datos de series temporales
+- **Docker y Docker Compose**: Containerización y despliegue
+- **Brokers MQTT**: Con soporte TLS para comunicación segura
+
+## ⚙️ Configuración
+
+El sistema se configura mediante variables de entorno:
+
+```env
+# Base de datos MySQL
+MYSQL_USER=uservoltlogger
+MYSQL_PASSWORD=cambiarcambiar
+MYSQL_DB=voltlogger
+MYSQL_HOST=mariadb
+
+# Seguridad Flask
+FLASK_SECRET_KEY=tu_clave_secreta_aqui
+FERNET_KEY=tu_clave_fernet_aqui
+
+# InfluxDB
+INFLUX_URL=http://influxdb:8086
+INFLUX_TOKEN=tu_token_aqui
+INFLUX_ORG=tu_organizacion
+INFLUX_BUCKET=voltlogger
+```
+
+## 🌐 Configuración de Red y Proxy Inverso
+
+El sistema está optimizado para funcionar detrás de un proxy inverso:
+
+- **Contenedor SWAG**: Proxy inverso con manejo de HTTPS
+- **Configuración automática**: Headers X-Forwarded-* manejados correctamente
+- **Red interna**: Comunicación segura entre contenedores
+- **Puerto expuesto**: 8005 para comunicación con el proxy
+
+### Arquitectura de Red:
+```
+Internet → SWAG (Proxy) → VoltLogger (Puerto 8005)
+                    ↓
+                MariaDB + InfluxDB
+```
+
+## 🚀 Despliegue
+
+### Con Docker Compose:
+```bash
+# Clonar el repositorio
+git clone <repository-url>
+cd proyecto-final-iot
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus valores
+
+# Iniciar servicios
+docker-compose up -d
+
+# Verificar logs
+docker-compose logs -f voltlogger
+```
+
+### Estructura de Archivos:
+```
+proyecto-final-iot/
+├── crud/
+│   ├── crud.py              # Aplicación principal Flask
+│   ├── database.sql         # Esquema de base de datos
+│   ├── requirements.txt     # Dependencias Python
+│   └── templates/           # Plantillas HTML
+│       ├── dashboards/      # Dashboards especializados
+│       └── layout.html      # Plantilla base
+├── compose.yaml             # Configuración Docker
+└── README.md               # Este archivo
+```
+
+## 📈 Monitoreo y Mantenimiento
+
+### Logs del Sistema:
+- **Logs de aplicación**: Flask con formato estructurado
+- **Logs de MQTT**: Conexiones y mensajes procesados
+- **Logs de base de datos**: Operaciones de lectura/escritura
+- **Logs de Docker**: Estado de contenedores
+
+### Métricas de Rendimiento:
+- **Tiempo de respuesta**: APIs y dashboards
+- **Uso de memoria**: Contenedores y aplicaciones
+- **Conexiones MQTT**: Estado y estabilidad
+- **Almacenamiento**: Uso de MySQL e InfluxDB
+
+## 🔧 Desarrollo y Contribución
+
+### Estructura del Código:
+- **Modular**: Separación clara de responsabilidades
+- **Documentado**: Comentarios explicativos en funciones clave
+- **Testeable**: Funciones con responsabilidades únicas
+- **Escalable**: Arquitectura preparada para crecimiento
+
+### Mejores Prácticas Implementadas:
+- **Principio DRY**: Código reutilizable y mantenible
+- **Separación de concerns**: Lógica de negocio separada de presentación
+- **Manejo de errores**: Try-catch comprehensivo
+- **Logging estructurado**: Trazabilidad completa de operaciones
+
+## 📞 Soporte y Contacto
+
+Para soporte técnico o consultas:
+- **Email**: emidariel2012@gmail.com
+- **Proyecto**: Sistema de Control IoT - VoltLogger
+- **Desarrollador**: Lukoski Emiliano Dariel
+
+---
+
+**VoltLogger** - Monitoreo inteligente para dispositivos IoT

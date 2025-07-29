@@ -3,17 +3,17 @@
 {% block title %}Dashboards - VoltLogger{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid fade-in">
     <!-- Header de la página -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h1 class="h3 mb-0">
-                        <i class="fas fa-chart-line me-2"></i>
-                        Dashboards de Monitoreo
+                        <i class="fas fa-bolt text-warning me-2"></i>
+                        Dashboards de VoltLogger
                     </h1>
-                    <p class="text-muted mb-0">Visualiza los datos de tensión y frecuencia de tus dispositivos</p>
+                    <p class="text-muted mb-0">Visualiza los datos de tensión y frecuencia de tus dispositivos con VoltLogger</p>
                 </div>
             </div>
         </div>
@@ -22,14 +22,15 @@
     <!-- Mostrar dispositivo seleccionado -->
     <div class="row mb-3">
         <div class="col-12">
-            <div class="alert alert-info py-2 mb-0">
+            <div class="alert alert-info py-2 mb-0 d-flex align-items-center">
+                <i class="fas fa-microchip me-2"></i>
                 <strong>Dispositivo seleccionado:</strong> <span id="dispositivo-seleccionado">-</span>
             </div>
         </div>
     </div>
 
     <!-- Grid de dashboards -->
-    <div class="row" id="dashboardsGrid">
+    <div class="row w-100" id="dashboardsGrid">
         {% for dashboard in dashboards %}
         <div class="col-lg-6 mb-4">
             <div class="card h-100 dashboard-card">

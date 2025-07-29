@@ -354,7 +354,15 @@ def start_device_worker(device_id, broker_cfg):
                         payload = message.payload.decode()
                         if topic.endswith("/tension"):
                             try:
-                                valor = float(payload)
+                                # Intentar decodificar como JSON primero
+                                try:
+                                    data = json.loads(payload)
+                                    if isinstance(data, dict) and "value" in data:
+                                        valor = float(data["value"])
+                                    else:
+                                        valor = float(payload)
+                                except (ValueError, json.JSONDecodeError, TypeError):
+                                    valor = float(payload)
                             except ValueError:
                                 logging.warning(f"Payload inválido para tensión: '{payload}' en {topic}")
                                 continue
@@ -367,7 +375,15 @@ def start_device_worker(device_id, broker_cfg):
                                 logging.error(f"  Bucket: {INFLUX_BUCKET}, Org: {INFLUX_ORG}")
                         elif topic.endswith("/frecuencia"):
                             try:
-                                valor = float(payload)
+                                # Intentar decodificar como JSON primero
+                                try:
+                                    data = json.loads(payload)
+                                    if isinstance(data, dict) and "value" in data:
+                                        valor = float(data["value"])
+                                    else:
+                                        valor = float(payload)
+                                except (ValueError, json.JSONDecodeError, TypeError):
+                                    valor = float(payload)
                             except ValueError:
                                 logging.warning(f"Payload inválido para frecuencia: '{payload}' en {topic}")
                                 continue

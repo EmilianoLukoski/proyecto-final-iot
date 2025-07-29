@@ -3,7 +3,7 @@
 {% block title %}Frecuencia - VoltLogger{% endblock %}
 
 {% block content %}
-<div class="dashboard-container" style="background: var(--color-bg);">
+<div class="container-fluid fade-in">
     <!-- Header del Dashboard -->
     <div class="dashboard-header" style="background: var(--color-header);">
         <div class="container-fluid">
@@ -36,6 +36,13 @@
                                 <span class="ms-1">Acciones</span>
                             </button>
                             <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="exportarCSV()">
+                                    <i class="fas fa-file-csv me-2"></i>Exportar CSV
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportarPDF()">
+                                    <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="#" onclick="printDashboard()">
                                     <i class="fas fa-print me-2"></i>Imprimir
                                 </a></li>
@@ -57,6 +64,7 @@
                     <option value="60">Última hora</option>
                     <option value="360">Últimas 6 horas</option>
                     <option value="1440">Último día</option>
+                    <option value="4320">Últimos 3 días</option>
                     <option value="10080">Última semana</option>
                 </select>
             </div>
@@ -178,6 +186,10 @@
                                     </tbody>
                                 </table>
                             </div>
+                            <!-- Paginación -->
+                            <nav>
+                                <ul class="pagination justify-content-center mt-3" id="paginacionFrecuencia"></ul>
+                            </nav>
                         </div>
                     </div>
                 </div>
@@ -227,7 +239,7 @@ function actualizarDashboard() {
             }
 
             // Actualizar gráfico
-            const labels = data.datos.map(d => new Date(d.tiempo).toLocaleTimeString());
+            const labels = data.datos.map(d => new Date(d.tiempo).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
             const values = data.datos.map(d => d.valor);
             if (!chartFrecuencia) {
                 const ctx = document.getElementById('frecuenciaChart').getContext('2d');
@@ -236,7 +248,8 @@ function actualizarDashboard() {
                 if (values.length > 0) {
                     const min = Math.min(...values);
                     const max = Math.max(...values);
-                    yMin = min - 1;
+                    // Si el mínimo es 0, mantener el límite inferior en 0
+                    yMin = min === 0 ? 0 : min - 1;
                     yMax = max + 1;
                 }
                 chartFrecuencia = new Chart(ctx, {
@@ -254,8 +267,8 @@ function actualizarDashboard() {
                             pointBackgroundColor: '#0dcaf0',
                             pointBorderColor: '#fff',
                             pointBorderWidth: 2,
-                            pointRadius: 4,
-                            pointHoverRadius: 6
+                            pointRadius: 0,
+                            pointHoverRadius: 0
                         }]
                     },
                     options: {
@@ -302,7 +315,8 @@ function actualizarDashboard() {
                 if (values.length > 0) {
                     const min = Math.min(...values);
                     const max = Math.max(...values);
-                    chartFrecuencia.options.scales.y.min = min - 1;
+                    // Si el mínimo es 0, mantener el límite inferior en 0
+                    chartFrecuencia.options.scales.y.min = min === 0 ? 0 : min - 1;
                     chartFrecuencia.options.scales.y.max = max + 1;
                 } else {
                     chartFrecuencia.options.scales.y.min = undefined;
@@ -313,23 +327,71 @@ function actualizarDashboard() {
 
             // Actualizar tabla
             const tabla = document.getElementById('tablaFrecuencia');
-            tabla.innerHTML = '';
-            let prev = null;
-            data.datos.forEach((d, i) => {
-                let estado = '-';
-                if (d.valor <= 49) estado = '<span class="badge bg-danger">Baja</span>';
-                else if (d.valor > 49 && d.valor < 51) estado = '<span class="badge bg-success">Normal</span>';
-                else if (d.valor >= 51) estado = '<span class="badge" style="background-color: #8e24aa; color: #fff;">Alta</span>';
-                let variacion = '-';
-                if (prev !== null) {
-                    let v = d.valor - prev;
-                    if (v > 0) variacion = `<span class='text-success'>+${v.toFixed(1)} Hz</span>`;
-                    else if (v < 0) variacion = `<span class='text-danger'>${v.toFixed(1)} Hz</span>`;
-                    else variacion = `<span class='text-muted'>0.0 Hz</span>`;
-                }
-                tabla.innerHTML += `<tr><td>${new Date(d.tiempo).toLocaleTimeString()}</td><td><strong>${d.valor.toFixed(2)} Hz</strong></td><td>${estado}</td><td>${variacion}</td></tr>`;
-                prev = d.valor;
-            });
+const paginacion = document.getElementById('paginacionFrecuencia');
+tabla.innerHTML = '';
+paginacion.innerHTML = '';
+
+let prev = null;
+const filasPorPagina = 10;
+const totalPaginas = Math.ceil(data.datos.length / filasPorPagina);
+let paginaActual = 1;
+
+function renderPaginaFrecuencia(pagina) {
+    tabla.innerHTML = '';
+    let inicio = (pagina - 1) * filasPorPagina;
+    let fin = inicio + filasPorPagina;
+    let datosPagina = data.datos.slice(inicio, fin);
+
+    let valorPrevio = data.datos[inicio - 1]?.valor ?? null;
+
+    datosPagina.forEach((d, i) => {
+        let estado = '-';
+        if (d.valor <= 49) estado = '<span class="badge bg-danger">Baja</span>';
+        else if (d.valor > 49 && d.valor < 51) estado = '<span class="badge bg-success">Normal</span>';
+        else if (d.valor >= 51) estado = '<span class="badge" style="background-color: #8e24aa; color: #fff;">Alta</span>';
+
+        let variacion = '-';
+        if (valorPrevio !== null) {
+            let v = d.valor - valorPrevio;
+            if (v > 0) variacion = `<span class='text-success'>+${v.toFixed(1)} Hz</span>`;
+            else if (v < 0) variacion = `<span class='text-danger'>${v.toFixed(1)} Hz</span>`;
+            else variacion = `<span class='text-muted'>0.0 Hz</span>`;
+        }
+
+        tabla.innerHTML += `<tr>
+            <td>${new Date(d.tiempo).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</td>
+            <td><strong>${d.valor.toFixed(2)} Hz</strong></td>
+            <td>${estado}</td>
+            <td>${variacion}</td>
+        </tr>`;
+
+        valorPrevio = d.valor;
+    });
+}
+
+function renderPaginacionFrecuencia() {
+    paginacion.innerHTML = '';
+    for (let i = 1; i <= totalPaginas; i++) {
+        const li = document.createElement('li');
+        li.className = 'page-item' + (i === paginaActual ? ' active' : '');
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.textContent = i;
+        a.addEventListener('click', e => {
+            e.preventDefault();
+            paginaActual = i;
+            renderPaginaFrecuencia(paginaActual);
+            renderPaginacionFrecuencia();
+        });
+        li.appendChild(a);
+        paginacion.appendChild(li);
+    }
+}
+
+renderPaginaFrecuencia(paginaActual);
+renderPaginacionFrecuencia();
+
         })
         .catch(() => {
             document.getElementById('lastUpdate').textContent = 'Error';
@@ -379,6 +441,137 @@ document.addEventListener('DOMContentLoaded', function() {
 function printDashboard() {
     window.print();
 }
+
+function exportarCSV() {
+    const rango = document.getElementById('rangoTiempo').value;
+    fetch(`{{ url_for('api_frecuencia') }}?rango=${rango}`)
+        .then(resp => resp.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error al obtener datos para exportar');
+                return;
+            }
+            
+            // Crear contenido CSV
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Fecha,Hora,Frecuencia (Hz),Estado\n";
+            
+            data.datos.forEach(d => {
+                const fecha = new Date(d.tiempo);
+                const fechaStr = fecha.toLocaleDateString('es-ES');
+                const horaStr = fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                // Determinar estado
+                let estado = 'Normal';
+                if (d.valor <= 49) estado = 'Baja';
+                else if (d.valor > 49 && d.valor < 51) estado = 'Normal';
+                else if (d.valor >= 51) estado = 'Alta';
+                
+                csvContent += `${fechaStr},${horaStr},${d.valor.toFixed(2)},${estado}\n`;
+            });
+            
+            // Descargar archivo
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `frecuencia_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        })
+        .catch(error => {
+            console.error('Error exportando CSV:', error);
+            alert('Error al exportar datos');
+        });
+}
+
+function exportarPDF() {
+    const rango = document.getElementById('rangoTiempo').value;
+    fetch(`{{ url_for('api_frecuencia') }}?rango=${rango}`)
+        .then(resp => resp.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error al obtener datos para exportar');
+                return;
+            }
+            
+            // Crear contenido HTML para PDF
+            let htmlContent = `
+                <html>
+                <head>
+                    <title>Reporte de Frecuencia - VoltLogger</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1 { color: #333; text-align: center; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; font-weight: bold; }
+                        .header { margin-bottom: 20px; }
+                        .stats { margin: 20px 0; }
+                        .stat-item { display: inline-block; margin-right: 30px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Reporte de Frecuencia - VoltLogger</h1>
+                        <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString('es-ES')}</p>
+                        <p><strong>Rango:</strong> ${document.getElementById('rangoTiempo').options[document.getElementById('rangoTiempo').selectedIndex].text}</p>
+                    </div>
+                    
+                    <div class="stats">
+                        <div class="stat-item"><strong>Frecuencia Actual:</strong> ${data.estadisticas.actual !== null ? data.estadisticas.actual.toFixed(2) + ' Hz' : 'N/A'}</div>
+                        <div class="stat-item"><strong>Máxima:</strong> ${data.estadisticas.maximo !== null ? data.estadisticas.maximo.toFixed(2) + ' Hz' : 'N/A'}</div>
+                        <div class="stat-item"><strong>Mínima:</strong> ${data.estadisticas.minimo !== null ? data.estadisticas.minimo.toFixed(2) + ' Hz' : 'N/A'}</div>
+                        <div class="stat-item"><strong>Promedio:</strong> ${data.estadisticas.promedio !== null ? data.estadisticas.promedio.toFixed(2) + ' Hz' : 'N/A'}</div>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Frecuencia (Hz)</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            
+            data.datos.forEach(d => {
+                const fecha = new Date(d.tiempo);
+                const fechaStr = fecha.toLocaleDateString('es-ES');
+                const horaStr = fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                // Determinar estado
+                let estado = 'Normal';
+                if (d.valor <= 49) estado = 'Baja';
+                else if (d.valor > 49 && d.valor < 51) estado = 'Normal';
+                else if (d.valor >= 51) estado = 'Alta';
+                
+                htmlContent += `<tr>
+                    <td>${fechaStr}</td>
+                    <td>${horaStr}</td>
+                    <td>${d.valor.toFixed(2)}</td>
+                    <td>${estado}</td>
+                </tr>`;
+            });
+            
+            htmlContent += `
+                        </tbody>
+                    </table>
+                </body>
+                </html>`;
+            
+            // Crear ventana para imprimir
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            printWindow.print();
+        })
+        .catch(error => {
+            console.error('Error exportando PDF:', error);
+            alert('Error al exportar datos');
+        });
+}
 </script>
 
 <style>
@@ -403,5 +596,22 @@ body.dark-theme .rango-tiempo-select {
     color: #f8f9fa;
     border: 1.5px solid #444950;
 }
+    .pagination .page-link {
+        color: #000; /* Texto negro */
+        background-color: #f8f9fa; /* Fondo gris claro */
+        border: 1px solid #dee2e6;
+    }
+
+    .pagination .page-link:hover {
+        color: #fff;
+        background-color: #007bff; /* Azul Bootstrap */
+        border-color: #007bff;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #343a40; /* Fondo oscuro */
+        color: #fff; /* Texto blanco */
+        border-color: #343a40;
+    }
 </style>
 {% endblock %} 

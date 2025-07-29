@@ -4,15 +4,16 @@
 <style>
 .card-evento {
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    border: 1px solid #e3e3e3;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+    border: 2px solid #dee2e6;
     margin-bottom: 1rem;
+    background: white;
 }
 .btn-toggle-evento {
-    font-weight: 500;
+    font-weight: 600;
     font-size: 1.1rem;
-    background: #f8f9fa;
-    border: none;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
     border-radius: 8px;
     padding: 0.75rem 1rem;
     width: 100%;
@@ -24,37 +25,159 @@
     color: #212529;
 }
 .btn-toggle-evento:hover, .btn-toggle-evento:focus {
-    background: #e9ecef;
+    background: #f8f9fa;
     color: #212529;
+    text-decoration: none;
+    border-color: #adb5bd;
 }
 [data-theme="dark"] .btn-toggle-evento, body.dark-theme .btn-toggle-evento {
     background: #23272b;
     color: #f8f9fa;
+    border-color: #495057;
 }
 [data-theme="dark"] .btn-toggle-evento:hover, [data-theme="dark"] .btn-toggle-evento:focus, body.dark-theme .btn-toggle-evento:hover, body.dark-theme .btn-toggle-evento:focus {
     background: #343a40;
     color: #f8f9fa;
+    border-color: #6c757d;
 }
 .flecha {
     transition: transform 0.2s;
     font-size: 1.2em;
     margin-left: 10px;
     display: inline-block;
+    color: #495057;
+    font-weight: bold;
+}
+[data-theme="dark"] .flecha, body.dark-theme .flecha {
+    color: #adb5bd;
 }
 .flecha.abierta {
     transform: rotate(180deg);
 }
+.stats-card {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    border: 2px solid rgba(255,255,255,0.2);
+}
+.stats-card h3 {
+    color: white;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.stats-card .stats-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+.stats-card .stats-label {
+    opacity: 0.95;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.95);
+    font-weight: 500;
+}
+.chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+    overflow: hidden;
+    border: 2px solid #dee2e6;
+}
+[data-theme="dark"] .chart-container, body.dark-theme .chart-container {
+    background: #23272b;
+    color: #f8f9fa;
+    border-color: #495057;
+}
+.chart-container canvas {
+    max-height: 200px !important;
+}
+.chart-container h4 {
+    color: #212529;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+[data-theme="dark"] .chart-container h4, body.dark-theme .chart-container h4 {
+    color: #f8f9fa;
+}
 </style>
-<div class="container mt-4">
-    <h2 class="mb-4">Eventos Anómalos</h2>
+
+<div class="container-fluid fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Eventos Anómalos</h2>
+        <div class="dropdown">
+            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-2"></i>Exportar
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="exportarEventosCSV()">
+                    <i class="fas fa-file-csv me-2"></i>Exportar CSV
+                </a></li>
+                <li><a class="dropdown-item" href="#" onclick="exportarEventosPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                </a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Panel de Estadísticas -->
+    <div class="row mb-4" id="panel-estadisticas" style="display: none;">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="stats-card" style="flex: 1; margin-right: 1rem;">
+                    <h3><i class="fas fa-exclamation-triangle me-2"></i>Total Eventos</h3>
+                    <div class="stats-value" id="total-eventos">0</div>
+                    <div class="stats-label">Eventos registrados</div>
+                </div>
+                <div class="stats-card" style="flex: 1; margin-right: 1rem;">
+                    <h3><i class="fas fa-clock me-2"></i>Duración Promedio</h3>
+                    <div class="stats-value" id="duracion-promedio">0s</div>
+                    <div class="stats-label">Tiempo promedio por evento</div>
+                </div>
+                <div class="stats-card" style="flex: 1; margin-right: 1rem;">
+                    <h3><i class="fas fa-play-circle me-2"></i>En Curso</h3>
+                    <div class="stats-value" id="eventos-curso">0</div>
+                    <div class="stats-label">Eventos activos</div>
+                </div>
+                <div class="stats-card" style="flex: 1;">
+                    <h3><i class="fas fa-chart-line me-2"></i>Eventos Hoy</h3>
+                    <div class="stats-value" id="eventos-hoy">0</div>
+                    <div class="stats-label">En las últimas 24h</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Eventos por Día -->
+    <div class="row mb-4" id="grafico-eventos" style="display: none;">
+        <div class="col-12">
+            <div class="chart-container">
+                <h4 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Eventos por Día (Última Semana)</h4>
+                <div style="height: 200px; position: relative;">
+                    <canvas id="eventosChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Eventos -->
     <div id="eventos-lista">
         <div class="alert alert-info" id="cargando-eventos">Cargando eventos...</div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const FASES_ORDEN = ['inicio', 'peor', 'fin'];
 const FASES_LABEL = {inicio: 'Inicio', peor: 'Peor', fin: 'Fin'};
 let intervalId = null;
+let chartEventos = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Página de eventos cargada, iniciando actualización automática...');
@@ -64,6 +187,22 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Actualizando eventos automáticamente...');
         cargarEventos();
     }, 30000);
+
+    // Listener para cambios de tema
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                if (chartEventos) {
+                    actualizarTemaGrafico();
+                }
+            }
+        });
+    });
+    
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
 });
 
 function cargarEventos() {
@@ -73,6 +212,8 @@ function cargarEventos() {
         .then(data => {
             console.log('Datos recibidos:', data);
             mostrarEventos(data);
+            actualizarEstadisticas(data);
+            actualizarGrafico(data);
         })
         .catch(error => {
             console.error('Error cargando eventos:', error);
@@ -80,87 +221,344 @@ function cargarEventos() {
         });
 }
 
+function actualizarEstadisticas(eventos) {
+    if (!Array.isArray(eventos) || eventos.length === 0) {
+        document.getElementById('panel-estadisticas').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('panel-estadisticas').style.display = 'block';
+
+    // Total de eventos
+    document.getElementById('total-eventos').textContent = eventos.length;
+
+    // Eventos en curso
+    const enCurso = eventos.filter(ev => !ev.fases.fin).length;
+    document.getElementById('eventos-curso').textContent = enCurso;
+
+    // Eventos hoy (últimas 24h)
+    const ahora = new Date();
+    const hace24h = new Date(ahora.getTime() - 24 * 60 * 60 * 1000);
+    const eventosHoy = eventos.filter(ev => {
+        if (ev.fases.inicio && ev.fases.inicio.timestamp) {
+            const inicioEvento = new Date(ev.fases.inicio.timestamp);
+            return inicioEvento >= hace24h;
+        }
+        return false;
+    }).length;
+    document.getElementById('eventos-hoy').textContent = eventosHoy;
+
+    // Duración promedio
+    const eventosCompletados = eventos.filter(ev => ev.fases.inicio && ev.fases.fin);
+    if (eventosCompletados.length > 0) {
+        const duraciones = eventosCompletados.map(ev => {
+            const inicio = new Date(ev.fases.inicio.timestamp);
+            const fin = new Date(ev.fases.fin.timestamp);
+            return (fin - inicio) / 1000; // duración en segundos
+        });
+        const promedioSegundos = duraciones.reduce((a, b) => a + b, 0) / duraciones.length;
+        
+        let duracionTexto = '';
+        if (promedioSegundos < 60) {
+            duracionTexto = Math.round(promedioSegundos) + 's';
+        } else if (promedioSegundos < 3600) {
+            duracionTexto = Math.round(promedioSegundos / 60) + 'm';
+        } else {
+            duracionTexto = Math.round(promedioSegundos / 3600) + 'h';
+        }
+        document.getElementById('duracion-promedio').textContent = duracionTexto;
+    } else {
+        document.getElementById('duracion-promedio').textContent = 'N/A';
+    }
+}
+
+function actualizarGrafico(eventos) {
+    if (!Array.isArray(eventos) || eventos.length === 0) {
+        document.getElementById('grafico-eventos').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('grafico-eventos').style.display = 'block';
+
+    // Preparar datos para el gráfico (últimos 7 días)
+    const ahora = new Date();
+    const datos = {};
+    
+    // Inicializar los últimos 7 días
+    for (let i = 6; i >= 0; i--) {
+        const fecha = new Date(ahora.getTime() - i * 24 * 60 * 60 * 1000);
+        const fechaStr = fecha.toISOString().split('T')[0];
+        datos[fechaStr] = 0;
+    }
+
+    // Contar eventos por día
+    eventos.forEach(ev => {
+        if (ev.fases.inicio && ev.fases.inicio.timestamp) {
+            const fechaEvento = ev.fases.inicio.timestamp.split('T')[0];
+            if (datos[fechaEvento] !== undefined) {
+                datos[fechaEvento]++;
+            }
+        }
+    });
+
+    const labels = Object.keys(datos).map(fecha => {
+        const d = new Date(fecha);
+        return d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+    });
+    const values = Object.values(datos);
+
+    const ctx = document.getElementById('eventosChart').getContext('2d');
+    
+    if (chartEventos) {
+        chartEventos.destroy();
+    }
+
+    chartEventos = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Eventos',
+                data: values,
+                backgroundColor: '#17a2b8',
+                borderColor: '#17a2b8',
+                borderWidth: 0,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: getTheme() === 'dark' ? '#23272b' : 'rgba(0, 0, 0, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#17a2b8',
+                    borderWidth: 2,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                x: {
+                    grid: { 
+                        display: false
+                    },
+                    ticks: { 
+                        color: getTheme() === 'dark' ? '#ffffff' : '#000000',
+                        font: { size: 11, weight: '600' }
+                    },
+                    border: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { 
+                        display: false
+                    },
+                    ticks: {
+                        color: getTheme() === 'dark' ? '#ffffff' : '#000000',
+                        stepSize: 1,
+                        font: { size: 11, weight: '600' },
+                        maxTicksLimit: 5
+                    },
+                    border: {
+                        display: false
+                    }
+                }
+            },
+            layout: {
+                padding: {
+                    top: 15,
+                    bottom: 15
+                }
+            }
+        }
+    });
+}
+
+function getTheme() {
+    return document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+}
+
+function actualizarTemaGrafico() {
+    if (!chartEventos) return;
+    
+    const isDark = getTheme() === 'dark';
+    
+    // Actualizar colores de los ejes
+    chartEventos.options.scales.x.ticks.color = isDark ? '#ffffff' : '#000000';
+    chartEventos.options.scales.y.ticks.color = isDark ? '#ffffff' : '#000000';
+    
+    // Actualizar tooltip
+    chartEventos.options.plugins.tooltip.backgroundColor = isDark ? '#23272b' : 'rgba(0, 0, 0, 0.95)';
+    chartEventos.options.plugins.tooltip.borderColor = '#17a2b8';
+    
+    // Actualizar el gráfico
+    chartEventos.update();
+}
+
+function calcularDuracion(evento) {
+    if (!evento.fases.inicio || !evento.fases.fin) {
+        return evento.fases.fin ? 'Finalizado' : 'En curso';
+    }
+    
+    const inicio = new Date(evento.fases.inicio.timestamp);
+    const fin = new Date(evento.fases.fin.timestamp);
+    const duracionMs = fin - inicio;
+    const duracionSegundos = duracionMs / 1000;
+    
+    if (duracionSegundos < 60) {
+        return Math.round(duracionSegundos) + 's';
+    } else if (duracionSegundos < 3600) {
+        return Math.round(duracionSegundos / 60) + 'm';
+    } else {
+        return Math.round(duracionSegundos / 3600) + 'h';
+    }
+}
+
 function mostrarEventos(eventos) {
+    // Guardar eventos globalmente para exportación
+    eventosGlobales = eventos;
+    
     const cont = document.getElementById('eventos-lista');
     cont.innerHTML = '';
     if (!Array.isArray(eventos) || eventos.length === 0) {
         cont.innerHTML = '<div class="alert alert-warning">No hay eventos registrados para este dispositivo.</div>';
         return;
     }
-    let html = '';
-    eventos.forEach((ev, idx) => {
-        const fases = ev.fases || {};
-        let filas = '';
-        FASES_ORDEN.forEach(fase => {
-            const datos = fases[fase];
-            let fecha = '-';
-            let hora = '-';
-            if (datos && datos.timestamp) {
-                const partes = datos.timestamp.split('T');
-                fecha = partes[0];
-                if (partes[1]) {
-                    // Extraer hora con milisegundos si están disponibles
-                    const tiempoCompleto = partes[1];
-                    if (tiempoCompleto.includes('.')) {
-                        // Formato con milisegundos: "14:30:00.123" o "14:30:00.123-03:00"
-                        const tiempoPartes = tiempoCompleto.split('.');
-                        const horaBase = tiempoPartes[0];
-                        const milisegundos = tiempoPartes[1].split('-')[0].split('+')[0].substring(0, 3);
-                        hora = `${horaBase}.${milisegundos}`;
-                    } else {
-                        // Formato sin milisegundos: "14:30:00" o "14:30:00-03:00"
-                        hora = tiempoCompleto.split('-')[0].split('+')[0];
+
+    // Configuración de paginación
+    const eventosPorPagina = 3;
+    let paginaActual = 1;
+    const totalPaginas = Math.ceil(eventos.length / eventosPorPagina);
+
+    function renderEventos(pagina) {
+        const inicio = (pagina - 1) * eventosPorPagina;
+        const fin = Math.min(inicio + eventosPorPagina, eventos.length);
+        const eventosPagina = eventos.slice(inicio, fin);
+
+        let html = '';
+        eventosPagina.forEach((ev, idx) => {
+            const fases = ev.fases || {};
+            let filas = '';
+            FASES_ORDEN.forEach(fase => {
+                const datos = fases[fase];
+                let fecha = '-';
+                let hora = '-';
+                if (datos && datos.timestamp) {
+                    const partes = datos.timestamp.split('T');
+                    fecha = partes[0];
+                    if (partes[1]) {
+                        // Extraer hora con milisegundos si están disponibles
+                        const tiempoCompleto = partes[1];
+                        if (tiempoCompleto.includes('.')) {
+                            // Formato con milisegundos: "14:30:00.123" o "14:30:00.123-03:00"
+                            const tiempoPartes = tiempoCompleto.split('.');
+                            const horaBase = tiempoPartes[0];
+                            const milisegundos = tiempoPartes[1].split('-')[0].split('+')[0].substring(0, 3);
+                            hora = `${horaBase}.${milisegundos}`;
+                        } else {
+                            // Formato sin milisegundos: "14:30:00" o "14:30:00-03:00"
+                            hora = tiempoCompleto.split('-')[0].split('+')[0];
+                        }
                     }
                 }
-            }
-            filas += `<tr>
-                <td>${FASES_LABEL[fase]}</td>
-                <td>${(datos && datos.tension !== undefined && datos.tension !== null) ? datos.tension + ' V' : '-'}</td>
-                <td>${fecha}</td>
-                <td>${hora}</td>
-            </tr>`;
-        });
-        const enCurso = !fases.fin;
-        html += `
-        <div class="card card-evento">
-            <div class="card-header p-0">
-                <button class="btn-toggle-evento" type="button" onclick="toggleEventoDetalle('eventoDetalle${idx}', this)">
-                    <span>
-                        <b>${ev.tipo_evento ? ev.tipo_evento.toUpperCase() : '-'}</b>
-                        &nbsp; | &nbsp; <span class="text-secondary">ID:</span> ${ev.id_evento}
-                        &nbsp; | &nbsp; <span class="text-secondary">Inicio:</span> ${fases.inicio && fases.inicio.timestamp ? fases.inicio.timestamp.replace('T',' ').substring(0,19) : '-'}
-                        ${enCurso ? '<span class="badge bg-warning text-dark ms-2">En curso</span>' : ''}
-                    </span>
-                    <span class="flecha">&#9660;</span>
-                </button>
-            </div>
-            <div class="collapse" id="eventoDetalle${idx}">
-                <div class="card-body">
-                    <table class="table table-bordered mb-0">
-                        <thead>
-                            <tr>
-                                <th>Fase</th>
-                                <th>Tensión</th>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${filas}
-                        </tbody>
-                    </table>
+                filas += `<tr>
+                    <td>${FASES_LABEL[fase]}</td>
+                    <td>${(datos && datos.tension !== undefined && datos.tension !== null) ? datos.tension + ' V' : '-'}</td>
+                    <td>${fecha}</td>
+                    <td>${hora}</td>
+                </tr>`;
+            });
+            const enCurso = !fases.fin;
+            const duracion = calcularDuracion(ev);
+            html += `
+            <div class="card card-evento">
+                <div class="card-header p-0">
+                    <button class="btn-toggle-evento" type="button" onclick="toggleEventoDetalle('eventoDetalle${inicio + idx}', this)">
+                        <span>
+                            <b>${ev.tipo_evento ? ev.tipo_evento.toUpperCase() : '-'}</b>
+                            &nbsp; | &nbsp; <span class="text-secondary">ID:</span> ${ev.id_evento}
+                            &nbsp; | &nbsp; <span class="text-secondary">Inicio:</span> ${fases.inicio && fases.inicio.timestamp ? fases.inicio.timestamp.replace('T',' ').substring(0,19) : '-'}
+                            &nbsp; | &nbsp; <span class="text-secondary">Duración:</span> <span class="badge ${enCurso ? 'bg-warning text-dark' : 'bg-primary'}">${duracion}</span>
+                            ${enCurso ? '<span class="badge bg-warning text-dark ms-2">En curso</span>' : ''}
+                        </span>
+                        <span class="flecha">&#9660;</span>
+                    </button>
                 </div>
+                <div class="collapse" id="eventoDetalle${inicio + idx}">
+                    <div class="card-body">
+                        <table class="table table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Fase</th>
+                                    <th>Tensión</th>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filas}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        // Agregar paginación
+        if (totalPaginas > 1) {
+            html += `
+            <div class="d-flex justify-content-center mt-4">
+                <nav aria-label="Navegación de eventos">
+                    <ul class="pagination pagination-sm">
+                        <li class="page-item ${pagina === 1 ? 'disabled' : ''}">
+                            <button class="page-link" onclick="cambiarPagina(${pagina - 1})" ${pagina === 1 ? 'disabled' : ''}>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </li>`;
+            
+            // Mostrar números de página
+            const inicioPagina = Math.max(1, pagina - 2);
+            const finPagina = Math.min(totalPaginas, pagina + 2);
+            
+            for (let i = inicioPagina; i <= finPagina; i++) {
+                html += `
+                        <li class="page-item ${i === pagina ? 'active' : ''}">
+                            <button class="page-link" onclick="cambiarPagina(${i})">${i}</button>
+                        </li>`;
+            }
+            
+            html += `
+                        <li class="page-item ${pagina === totalPaginas ? 'disabled' : ''}">
+                            <button class="page-link" onclick="cambiarPagina(${pagina + 1})" ${pagina === totalPaginas ? 'disabled' : ''}>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
             </div>
-        </div>`;
-    });
-    cont.innerHTML = html;
-    // Abre el primer evento por defecto
-    const first = cont.querySelector('.collapse');
-    const firstFlecha = cont.querySelector('.flecha');
-    if (first) {
-        first.classList.add('show');
-        if (firstFlecha) firstFlecha.classList.add('abierta');
+            <div class="text-center text-muted mt-2 small">
+                Página ${pagina} de ${totalPaginas} • Mostrando eventos ${inicio + 1} a ${fin} de ${eventos.length} total
+            </div>`;
+        }
+
+        cont.innerHTML = html;
     }
+
+    // Función para cambiar página
+    window.cambiarPagina = function(nuevaPagina) {
+        if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
+            paginaActual = nuevaPagina;
+            renderEventos(paginaActual);
+        }
+    };
+
+    // Renderizar primera página
+    renderEventos(paginaActual);
 }
 
 // Función global para mostrar/ocultar detalles y rotar flecha
@@ -179,5 +577,175 @@ window.addEventListener('beforeunload', function() {
         clearInterval(intervalId);
     }
 });
+
+// Variables globales para exportación
+let eventosGlobales = [];
+
+function exportarEventosCSV() {
+    if (!eventosGlobales || eventosGlobales.length === 0) {
+        alert('No hay eventos para exportar');
+        return;
+    }
+    
+    // Crear contenido CSV
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "ID Evento,Tipo Evento,Estado,Fase,Inicio,Fin,Duracion,Tension (V)\n";
+    
+    eventosGlobales.forEach(ev => {
+        const fases = ev.fases || {};
+        const enCurso = !fases.fin;
+        const duracion = calcularDuracion(ev);
+        
+        // Fase de inicio
+        if (fases.inicio) {
+            const inicio = new Date(fases.inicio.timestamp);
+            const fechaInicio = inicio.toLocaleDateString('es-ES');
+            const horaInicio = inicio.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            csvContent += `${ev.id_evento},${ev.tipo_evento || 'N/A'},${enCurso ? 'En curso' : 'Finalizado'},Inicio,${fechaInicio} ${horaInicio},,${duracion},${fases.inicio.tension !== undefined && fases.inicio.tension !== null ? fases.inicio.tension + ' V' : 'N/A'}\n`;
+        }
+        
+        // Fase peor
+        if (fases.peor) {
+            const peor = new Date(fases.peor.timestamp);
+            const fechaPeor = peor.toLocaleDateString('es-ES');
+            const horaPeor = peor.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            csvContent += `${ev.id_evento},${ev.tipo_evento || 'N/A'},${enCurso ? 'En curso' : 'Finalizado'},Peor,${fechaPeor} ${horaPeor},,${duracion},${fases.peor.tension !== undefined && fases.peor.tension !== null ? fases.peor.tension + ' V' : 'N/A'}\n`;
+        }
+        
+        // Fase fin
+        if (fases.fin) {
+            const fin = new Date(fases.fin.timestamp);
+            const fechaFin = fin.toLocaleDateString('es-ES');
+            const horaFin = fin.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            csvContent += `${ev.id_evento},${ev.tipo_evento || 'N/A'},Finalizado,Fin,${fechaFin} ${horaFin},${fechaFin} ${horaFin},${duracion},${fases.fin.tension !== undefined && fases.fin.tension !== null ? fases.fin.tension + ' V' : 'N/A'}\n`;
+        }
+    });
+    
+    // Descargar archivo
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `eventos_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function exportarEventosPDF() {
+    if (!eventosGlobales || eventosGlobales.length === 0) {
+        alert('No hay eventos para exportar');
+        return;
+    }
+    
+    // Crear contenido HTML para PDF
+    let htmlContent = `
+        <html>
+        <head>
+            <title>Reporte de Eventos - VoltLogger</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #333; text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                .header { margin-bottom: 20px; }
+                .stats { margin: 20px 0; }
+                .stat-item { display: inline-block; margin-right: 30px; }
+                .evento-header { background-color: #e9ecef; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>Reporte de Eventos Anóalos - VoltLogger</h1>
+                <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString('es-ES')}</p>
+                <p><strong>Total de eventos:</strong> ${eventosGlobales.length}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Evento</th>
+                        <th>Tipo Evento</th>
+                        <th>Estado</th>
+                        <th>Fase</th>
+                        <th>Fecha/Hora</th>
+                        <th>Duración</th>
+                        <th>Tensión (V)</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+    
+    eventosGlobales.forEach(ev => {
+        const fases = ev.fases || {};
+        const enCurso = !fases.fin;
+        const duracion = calcularDuracion(ev);
+        
+        // Fase de inicio
+        if (fases.inicio) {
+            const inicio = new Date(fases.inicio.timestamp);
+            const fechaInicio = inicio.toLocaleDateString('es-ES');
+            const horaInicio = inicio.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            htmlContent += `<tr>
+                <td>${ev.id_evento}</td>
+                <td>${ev.tipo_evento || 'N/A'}</td>
+                <td>${enCurso ? 'En curso' : 'Finalizado'}</td>
+                <td>Inicio</td>
+                <td>${fechaInicio} ${horaInicio}</td>
+                <td>${duracion}</td>
+                <td>${fases.inicio.tension !== undefined && fases.inicio.tension !== null ? fases.inicio.tension + ' V' : 'N/A'}</td>
+            </tr>`;
+        }
+        
+        // Fase peor
+        if (fases.peor) {
+            const peor = new Date(fases.peor.timestamp);
+            const fechaPeor = peor.toLocaleDateString('es-ES');
+            const horaPeor = peor.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            htmlContent += `<tr>
+                <td>${ev.id_evento}</td>
+                <td>${ev.tipo_evento || 'N/A'}</td>
+                <td>${enCurso ? 'En curso' : 'Finalizado'}</td>
+                <td>Peor</td>
+                <td>${fechaPeor} ${horaPeor}</td>
+                <td>${duracion}</td>
+                <td>${fases.peor.tension !== undefined && fases.peor.tension !== null ? fases.peor.tension + ' V' : 'N/A'}</td>
+            </tr>`;
+        }
+        
+        // Fase fin
+        if (fases.fin) {
+            const fin = new Date(fases.fin.timestamp);
+            const fechaFin = fin.toLocaleDateString('es-ES');
+            const horaFin = fin.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            htmlContent += `<tr>
+                <td>${ev.id_evento}</td>
+                <td>${ev.tipo_evento || 'N/A'}</td>
+                <td>Finalizado</td>
+                <td>Fin</td>
+                <td>${fechaFin} ${horaFin}</td>
+                <td>${duracion}</td>
+                <td>${fases.fin.tension !== undefined && fases.fin.tension !== null ? fases.fin.tension + ' V' : 'N/A'}</td>
+            </tr>`;
+        }
+    });
+    
+    htmlContent += `
+                </tbody>
+            </table>
+        </body>
+        </html>`;
+    
+    // Crear ventana para imprimir
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    printWindow.print();
+}
 </script>
 {% endblock %} 
